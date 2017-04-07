@@ -557,173 +557,172 @@ class Triangle(Polygon):
 #  for a geometric shape.
 #
 class Box(object):
-	"""A class for computing bounding boxes."""
+    """A class for computing bounding boxes."""
 
-	def __init__(self):
-		"""Constructs an invalid bouding box."""
+    def __init__(self):
+            """Constructs an invalid bouding box."""
 
-		## Set for lazy calculation of normalization parameters. 
-		self.ready = False
-		## A list with two points: the lower left corner and upper right corner of this box.
-		self.bbox = []
+            ## Set for lazy calculation of normalization parameters. 
+            self.ready = False
+            ## A list with two points: the lower left corner and upper right corner of this box.
+            self.bbox = []
 
-	def __getitem__(self, ind):
-		"""Indexing operator."""
-		return self.bbox[ind]
+    def __getitem__(self, ind):
+            """Indexing operator."""
+            return self.bbox[ind]
 
-	def __setitem__(self, ind, val):
-		"""Indexing operator."""
-		self.bbox[ind] = val
-		return val
+    def __setitem__(self, ind, val):
+            """Indexing operator."""
+            self.bbox[ind] = val
+            return val
 
-	def __str__(self):
-		"Return a string representation of this box."""  
-		return "%s, %s" % (self[0], self[1])
+    def __str__(self):
+            "Return a string representation of this box."""  
+            return "%s, %s" % (self[0], self[1])
 
-	def __cmp__(self,b):
-		"""Return < 0 if self < b, 
-                  > 0 if self > b,
-                    0 if self = b
-		"""
+    def __cmp__(self,b):
+            """Return < 0 if self < b, 
+              > 0 if self > b,
+                0 if self = b
+            """
 
-		raise("Undefined")
+            raise("Undefined")
 
-	def add(self,p):
-		"""Adds a new point to the bounding box."""
+    def add(self,p):
+            """Adds a new point to the bounding box."""
 
-		if not self.bbox:
-			p1 = Point(p.x,p.y,p.z)
-			p2 = Point(p.x,p.y,p.z)
-			self.bbox += [p1,p2]
-		else:	
-			self.bbox[0].x = min(p.x,self.bbox[0].x)
-			self.bbox[1].x = max(p.x,self.bbox[1].x)
-			self.bbox[0].y = min(p.y,self.bbox[0].y)
-			self.bbox[1].y = max(p.y,self.bbox[1].y)
-			self.bbox[0].z = min(p.z,self.bbox[0].z)
-			self.bbox[1].z = max(p.z,self.bbox[1].z)
-		return self.bbox
+            if not self.bbox:
+                    p1 = Point(p.x,p.y,p.z)
+                    p2 = Point(p.x,p.y,p.z)
+                    self.bbox += [p1,p2]
+            else:	
+                    self.bbox[0].x = min(p.x,self.bbox[0].x)
+                    self.bbox[1].x = max(p.x,self.bbox[1].x)
+                    self.bbox[0].y = min(p.y,self.bbox[0].y)
+                    self.bbox[1].y = max(p.y,self.bbox[1].y)
+                    self.bbox[0].z = min(p.z,self.bbox[0].z)
+                    self.bbox[1].z = max(p.z,self.bbox[1].z)
+            return self.bbox
 
-	def contains(self,p):
-		"""Return whether this box contains point p."""
+    def contains(self,p):
+            """Return whether this box contains point p."""
 
-		return self[0].x <= p.x and p.x <= self[1].x and \
-               self[0].y <= p.y and p.y <= self[1].y and \
-               self[0].z <= p.z and p.z <= self[1].z
+            return self[0].x <= p.x and p.x <= self[1].x and \
+           self[0].y <= p.y and p.y <= self[1].y and \
+           self[0].z <= p.z and p.z <= self[1].z
 
-	def contains2(self,p):
-		"""Return whether this box contains point p."""
+    def contains2(self,p):
+            """Return whether this box contains point p."""
 
-		return self[0].x <= p.x and p.x <= self[1].x and \
-               self[0].y <= p.y and p.y <= self[1].y
+            return self[0].x <= p.x and p.x <= self[1].x and \
+           self[0].y <= p.y and p.y <= self[1].y
 
-	def centre(self):
-		"""Return the centre of the box."""
-		return 0.5*(self[0]+self[1])
+    def centre(self):
+            """Return the centre of the box."""
+            return 0.5*(self[0]+self[1])
 
-	def len(self):
-		"""Return the length (a vector) of the box."""	
-		return self[1]-self[0]
+    def len(self):
+            """Return the length (a vector) of the box."""	
+            return self[1]-self[0]
 
-	def outsidePosition(self):
-		"""Return a point outside the box."""
+    def outsidePosition(self):
+            """Return a point outside the box."""
 
-		return [self.centre().x, self.centre().y, self.centre().z + 5*self.len().z, 1.0 ]
+            return [self.centre().x, self.centre().y, self.centre().z + 5*self.len().z, 1.0 ]
 
-	def setParameters(self):
-		"""Calculates the parameters to a normalized box."""
+    def setParameters(self):
+            """Calculates the parameters to a normalized box."""
 
-		## Scale factor x.
-		self.sx = 1.0 / (self[1].x-self[0].x)
-		## Translation factor x.
-		self.tx = -self[0].x * self.sx
+            ## Scale factor x.
+            self.sx = 1.0 / (self[1].x-self[0].x)
+            ## Translation factor x.
+            self.tx = -self[0].x * self.sx
 
-		## Scale factor y.
-		self.sy = 1.0 / (self[1].y-self[0].y)
-		## Translation factor y.
-		self.ty = -self[0].y * self.sy
+            ## Scale factor y.
+            self.sy = 1.0 / (self[1].y-self[0].y)
+            ## Translation factor y.
+            self.ty = -self[0].y * self.sy
 
-		return (self.sx, self.sy, self.tx, self.ty)
+            return (self.sx, self.sy, self.tx, self.ty)
 
-	def normalize(self,p):
-		"""Normalize the given point."""
+    def normalize(self,p):
+            """Normalize the given point."""
 
-		#if not self.contains2(p):
-		#	print("Box: %s, p: %s" % (self,p))
-		#	return None
+            #if not self.contains2(p):
+            #	print("Box: %s, p: %s" % (self,p))
+            #	return None
 
-		if not self.ready:
-			self.setParameters()
-			self.ready = True
+            if not self.ready:
+                    self.setParameters()
+                    self.ready = True
 
-		return Point(p.x*self.sx + self.tx, p.y*self.sy + self.ty)
-		
-		
+            return Point(p.x*self.sx + self.tx, p.y*self.sy + self.ty)
+            
+            
 ######################################################################################### 
 
 def main():
-        """Main program for testing."""
+    """Main program for testing."""
 
-        p1 = Point(1,0,0)
-        p2 = Point(0,1,0)
-        print("\np1 = %s" % p1)
-        print("p2 = %s" % p2)
-        print ("-1 * p1 = %s" % (-1*p1))
-        print("p1 + p2 = %s" % (p1+p2))
-        print("p1 x p2 = %s (2d)" % p1.crossProd2d(p2))
-        print("p2 x p1 = %s (2d)" % p2.crossProd2d(p1))
-        print("p1 x p2 = %s" % p1.crossProd(p2))
-        print("p2 x p1 = %s" % p2.crossProd(p1))
-        
-        pol = Polygon([Point(0,0,0), Point(1,0,0), Point(1,1,0), Point(0,1,0)])
-        print ("\nPol = %s" % pol)
-        print("Pol area = %s" % pol.area())
-        print("Pol normal = %s" % pol.normal)
-        print("Pol random interior = %s" % pol.interiorPoint())
-        print("Pol random exterior = %s" % pol.exteriorPoint())
-        
-        p = Point(1,2,3)
-        print("\np = %s" % p)
-        p.normalize()
-        print ("p normalized = %s" % p)
-        
-        p = Point(0.5,0.5,0)
-        print("\nPol contains %s: %s" % (p,pol.contains(p)))
-        print("Pol contains %s: %s" % (-1*p,pol.contains(-1*p)))
-        print("Pol is convex %s" % pol.isConvex())
-        
-        t = Triangle(Point(1,0,0), Point(0,1,0), Point(0,0,1))
-        pol2 = Polygon([Point(1,0,0), Point(0,1,0), Point(1./3,1./3,1./3), Point(0,0,1)])
+    p1 = Point(1,0,0)
+    p2 = Point(0,1,0)
+    print("\np1 = %s" % p1)
+    print("p2 = %s" % p2)
+    print ("-1 * p1 = %s" % (-1*p1))
+    print("p1 + p2 = %s" % (p1+p2))
+    print("p1 x p2 = %s (2d)" % p1.crossProd2d(p2))
+    print("p2 x p1 = %s (2d)" % p2.crossProd2d(p1))
+    print("p1 x p2 = %s" % p1.crossProd(p2))
+    print("p2 x p1 = %s" % p2.crossProd(p1))
+    
+    pol = Polygon([Point(0,0,0), Point(1,0,0), Point(1,1,0), Point(0,1,0)])
+    print ("\nPol = %s" % pol)
+    print("Pol area = %s" % pol.area())
+    print("Pol normal = %s" % pol.normal)
+    print("Pol random interior = %s" % pol.interiorPoint())
+    print("Pol random exterior = %s" % pol.exteriorPoint())
+    
+    p = Point(1,2,3)
+    print("\np = %s" % p)
+    p.normalize()
+    print ("p normalized = %s" % p)
+    
+    p = Point(0.5,0.5,0)
+    print("\nPol contains %s: %s" % (p,pol.contains(p)))
+    print("Pol contains %s: %s" % (-1*p,pol.contains(-1*p)))
+    print("Pol is convex %s" % pol.isConvex())
+    
+    t = Triangle(Point(1,0,0), Point(0,1,0), Point(0,0,1))
+    pol2 = Polygon([Point(1,0,0), Point(0,1,0), Point(1./3,1./3,1./3), Point(0,0,1)])
 
-        print ("\nt = %s" % t)
-        print("t area = %s" % t.area())
+    print ("\nt = %s" % t)
+    print("t area = %s" % t.area())
 
-        print ("\nPol2 = %s" % pol2)
-        print("Pol2 is convex %s" % pol2.isConvex()) 
-        
-        l1 = Line(Point(0,0), Point(5,0))
-        l2 = Line(Point(2.5,7), Point(2.5,-7))
-        l3 = Line(Point(0.5,0.5,-5), Point(0.5,0.5,5))
-        l4 = Line(Point(10.5,-10.5,-5), Point(7.5,-0.5,5))
-        print("\nl1 = %s" % l1)
-        print("l2 = %s" % l2)
-        print("l3 = %s" % l3)
-        
-        p = Point(2.5, 7.0, 0.0)
-        print("\np = %s" % p)
-        print ("Dist from p to l1 = %s" % l1.distance(p) )
-        print ("l1 at 0.2 = %s" % l1.atT(0.2))
-        (l,t1,t2) = l1.shortestPathToLine(l2)
-        print (p1)
-        print (p2)
-        print(t1)
-        print(t2)
-        print("Distance l1-l2 = %s" % l1.distanceToLine(l2))
-        print("Intersection l1-l2 = %s" % l1.intersection(l2))
+    print ("\nPol2 = %s" % pol2)
+    print("Pol2 is convex %s" % pol2.isConvex()) 
+    
+    l1 = Line(Point(0,0), Point(5,0))
+    l2 = Line(Point(2.5,7), Point(2.5,-7))
+    l3 = Line(Point(0.5,0.5,-5), Point(0.5,0.5,5))
+    l4 = Line(Point(10.5,-10.5,-5), Point(7.5,-0.5,5))
+    print("\nl1 = %s" % l1)
+    print("l2 = %s" % l2)
+    print("l3 = %s" % l3)
+    
+    p = Point(2.5, 7.0, 0.0)
+    print("\np = %s" % p)
+    print ("Dist from p to l1 = %s" % l1.distance(p) )
+    print ("l1 at 0.2 = %s" % l1.atT(0.2))
+    (l,t1,t2) = l1.shortestPathToLine(l2)
+    print (p1)
+    print (p2)
+    print(t1)
+    print(t2)
+    print("Distance l1-l2 = %s" % l1.distanceToLine(l2))
+    print("Intersection l1-l2 = %s" % l1.intersection(l2))
 
-        print("l3 and pol intersection: %s" % l3.intersectToPlane(pol)[0])
-        print("Does l3 intersect pol: %s" % pol.doesLineCrossPolygon(l3)[0])
-        print("Does l4 intersect pol: %s \n" % pol.doesLineCrossPolygon(l4)[0])
+    print("l3 and pol intersection: %s" % l3.intersectToPlane(pol)[0])
+    print("Does l3 intersect pol: %s" % pol.doesLineCrossPolygon(l3)[0])
+    print("Does l4 intersect pol: %s \n" % pol.doesLineCrossPolygon(l4)[0])
 
-if __name__ == '__main__':
-   sys.exit(main())
+if __name__ == '__main__': sys.exit(main())
