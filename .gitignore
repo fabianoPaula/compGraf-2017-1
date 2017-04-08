@@ -1,5 +1,11 @@
 # Add any directories, files, or patterns you don't want to be tracked by version control
 
+# Ignoring the compiled files
 *.pyc
+
+# Ignoring backup files
 *~
+
+# Ignoring pictures files
+*.png
 
