@@ -26,6 +26,13 @@ g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
 
+POLIEDRY = None
+
+def set_poliedry(poliedry = None):
+    global POLIEDRY
+    POLIEDRY = poliedry
+    print "SAVED"
+
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
@@ -44,8 +51,8 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
     # Why? this tutorial never maps any textures?! ? 
     # gluQuadricTexture(g_quadratic, GL_TRUE);		# // Create Texture Coords
 
-    glEnable (GL_LIGHT0)
-    glEnable (GL_LIGHTING)
+#    glEnable (GL_LIGHT0)
+ #   glEnable (GL_LIGHTING)
     glEnable (GL_COLOR_MATERIAL)
 
     return True
@@ -163,6 +170,7 @@ def Torus(MinorRadius, MajorRadius):
     return
 
 def Draw ():
+    global POLIEDRY
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); # // Clear Screen And Depth Buffer
     glLoadIdentity();				        # // Reset The Current Modelview Matrix
     glTranslatef(0.0,0.0,-7.0);                        # // Move Left 1.5 Units And Into The Screen 6.0
@@ -170,7 +178,10 @@ def Draw ():
     glPushMatrix();				        # // NEW: Prepare Dynamic Transform
     glMultMatrixf(g_Transform); 		        # // NEW: Apply Dynamic Transform
     glColor3f(0.75,0.75,1.0);   
-    Cube()
+    #Cube()
+    #print "# Antes"
+    POLIEDRY.draw()
+    #print "# Depois"
     #Torus(0.30,1.00);
     glPopMatrix();				        # // NEW: Unapply Dynamic Transform
 
