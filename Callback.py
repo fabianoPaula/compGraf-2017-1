@@ -51,14 +51,20 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
     # Why? this tutorial never maps any textures?! ? 
     # gluQuadricTexture(g_quadratic, GL_TRUE);		# // Create Texture Coords
 
-#    glEnable (GL_LIGHT0)
- #   glEnable (GL_LIGHTING)
+    #glEnable (GL_LIGHT0)
+    #glEnable (GL_LIGHTING)
     glEnable (GL_COLOR_MATERIAL)
 
     return True
 
-
-
+# The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
+def keyPressed(*args):
+    global g_quadratic
+    # If escape is pressed, kill everything.
+    key = args [0]
+    if key == ESCAPE:
+        gluDeleteQuadric (g_quadratic)
+    sys.exit ()
 
 def Upon_Drag (cursor_x, cursor_y):
     """ Mouse cursor is moving
@@ -100,89 +106,18 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
         g_ArcBall.click (mouse_pt);						# // Update Start Vector And Prepare For Dragging
     return
 
-def Cube():
-    # Draw Cube (multiple quads)
-    glBegin(GL_QUADS)
-
-    glColor3f(0.0,1.0,0.0)
-    glVertex3f( 1.0, 1.0,-1.0)
-    glVertex3f(-1.0, 1.0,-1.0)
-    glVertex3f(-1.0, 1.0, 1.0)
-    glVertex3f( 1.0, 1.0, 1.0) 
-                        
-    glColor3f(1.0,0.0,0.0)
-    glVertex3f( 1.0,-1.0, 1.0)
-    glVertex3f(-1.0,-1.0, 1.0)
-    glVertex3f(-1.0,-1.0,-1.0)
-    glVertex3f( 1.0,-1.0,-1.0) 
-               
-    glColor3f(0.5,0.5,1.0)
-    glVertex3f( 1.0,1.0,1.0)
-    glVertex3f(-1.0,1.0,1.0)
-    glVertex3f(-1.0,-1.0,1.0)
-    glVertex3f(1.0,-1.0, 1.0)
-
-    glColor3f(1.0,1.0,0.0)
-    glVertex3f(1.0,-1.0,-1.0)
-    glVertex3f(-1.0,-1.0,-1.0)
-    glVertex3f(-1.0,1.0,-1.0)
-    glVertex3f( 1.0,1.0,-1.0)
-
-    glColor3f(0.0,0.0,1.0)
-    glVertex3f(-1.0,1.0,1.0) 
-    glVertex3f(-1.0,1.0,-1.0)
-    glVertex3f(-1.0,-1.0,-1.0) 
-    glVertex3f(-1.0,-1.0,1.0) 
-
-    glColor3f(1.0,0.0,1.0)
-    glVertex3f(1.0,1.0,-1.0) 
-    glVertex3f(1.0,1.0, 1.0)
-    glVertex3f(1.0,-1.0,1.0)
-    glVertex3f(1.0,-1.0,-1.0)
-
-    glEnd()
-
-def Torus(MinorRadius, MajorRadius):		
-    # // Draw A Torus With Normals
-    glBegin( GL_TRIANGLE_STRIP );	    # // Start A Triangle Strip
-    for i in xrange (20): 		    # // Stacks
-        for j in xrange (-1, 20): 	    # // Slices
-            # NOTE, python's definition of modulus for negative numbers returns
-            # results different than C's
-	    #       (a / d)*d  +  a % d = a
-	    if (j < 0):
-	        wrapFrac = (-j%20)/20.0
-		wrapFrac *= -1.0
-            else:
-                wrapFrac = (j%20)/20.0;
-            phi = PI2*wrapFrac;
-            sinphi = sin(phi);
-            cosphi = cos(phi);
-
-            r = MajorRadius + MinorRadius*cosphi;
-
-            glNormal3f (sin(PI2*(i%20+wrapFrac)/20.0)*cosphi, sinphi, cos(PI2*(i%20+wrapFrac)/20.0)*cosphi);
-            glVertex3f (sin(PI2*(i%20+wrapFrac)/20.0)*r, MinorRadius*sinphi, cos(PI2*(i%20+wrapFrac)/20.0)*r);
-
-            glNormal3f (sin(PI2*(i+1%20+wrapFrac)/20.0)*cosphi, sinphi, cos(PI2*(i+1%20+wrapFrac)/20.0)*cosphi);
-            glVertex3f (sin(PI2*(i+1%20+wrapFrac)/20.0)*r, MinorRadius*sinphi, cos(PI2*(i+1%20+wrapFrac)/20.0)*r);
-    glEnd();														# // Done Torus
-    return
-
 def Draw ():
     global POLIEDRY
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); # // Clear Screen And Depth Buffer
     glLoadIdentity();				        # // Reset The Current Modelview Matrix
-    glTranslatef(0.0,0.0,-7.0);                        # // Move Left 1.5 Units And Into The Screen 6.0
+    glTranslatef(0.0,0.0,-20.0);                        # // Move Left 1.5 Units And Into The Screen 6.0
 
     glPushMatrix();				        # // NEW: Prepare Dynamic Transform
     glMultMatrixf(g_Transform); 		        # // NEW: Apply Dynamic Transform
     glColor3f(0.75,0.75,1.0);   
-    #Cube()
-    #print "# Antes"
+    
     POLIEDRY.draw()
-    #print "# Depois"
-    #Torus(0.30,1.00);
+    
     glPopMatrix();				        # // NEW: Unapply Dynamic Transform
 
     glLoadIdentity();		                        # // Reset The Current Modelview Matrix
