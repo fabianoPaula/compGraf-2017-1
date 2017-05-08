@@ -3,15 +3,24 @@
 #
 ## @package geometry
 #
-#  Classes and geometric utilities commonly used in computational geometry, such as: 
+#  Classes and geometric utilities commonly used in computational geometry, such as:
 #  point, line, polygon, triangle and box.
 #
 #  @author Flavia Cavalcanti
-#  @date 01/02/2017 
+#  @date 01/02/2017
 #
+
+from OpenGL.GL import *
+from OpenGL.GLUT import *
+from OpenGL.GLU import *
+
 from random import random
 from math import sqrt
 import sys, math, numpy
+
+from Queue import Queue
+
+from numpy import arccos
 
 ## Tolerance used for checking equalities.
 EPS = 0.001
@@ -33,18 +42,18 @@ def close(a,b,epsilon=EPS):
     """Returns whether two floats a and b are equal."""
     return abs(a-b) < epsilon
 
-######################################################################################### 
+#########################################################################################
 
 ## Implements a 3D point or vector.
-#  
+#
 #  Points are locations in space.
 #  Vectors are displacements in space.
 #
 #  A point in n-dimensional space is given by an n-tuple P=(p1,p2,...pn),
-#  where each coordinate pi is a scalar number. 
+#  where each coordinate pi is a scalar number.
 #
-#  A vector represents magnitude and direction in space, 
-#  and is given by an n-tuple v=(v1,v2,...vn)=(vi), where each coordinate vi is a scalar. 
+#  A vector represents magnitude and direction in space,
+#  and is given by an n-tuple v=(v1,v2,...vn)=(vi), where each coordinate vi is a scalar.
 #
 #  - vector + vector = vector.
 #  - vector - vector = vector.
@@ -75,8 +84,8 @@ class Point(object):
                self.y == other.y and \
                self.z == other.z
 
-    ## Should return the same value for objects that are equal. 
-    #  It also shouldn't change over the lifetime of the object; 
+    ## Should return the same value for objects that are equal.
+    #  It also shouldn't change over the lifetime of the object;
     #  generally you only implement it for immutable objects.
     def __hash__(self):
         return hash((self.x, self.y, self.z))
@@ -147,11 +156,11 @@ class Point(object):
         return numpy.array([self.x, self.y, self.z, 1])
 
     def dotProd (self, vec):
-        """Returns the dot product between this vector and vec.""" 
+        """Returns the dot product between this vector and vec."""
         return (self.x * vec.x) + (vec.y * self.y) + (vec.z * self.z)
 
     def crossProd2d (self, vec):
-        """Returns the bi-dimensional cross product between this vector and vec.""" 
+        """Returns the bi-dimensional cross product between this vector and vec."""
         return (self.x * vec.y) - (vec.x * self.y)
 
     def crossProd (self, vec):
@@ -160,10 +169,10 @@ class Point(object):
            More generally, the magnitude of the product equals the area of a parallelogram,
            with the vectors for sides, or two times the area of the triangle.
 
-           cross product: |self| |vec| sin(θ) n 
+           cross product: |self| |vec| sin(θ) n
 
            @see https://www.khanacademy.org/math/basic-geo/basic-geo-area-and-perimeter/parallelogram-area/a/area-of-parallelogram
-        """ 
+        """
         return Point ( (self.y * vec.z) - (self.z * vec.y),
                        (self.z * vec.x) - (self.x * vec.z),
                        (self.x * vec.y) - (self.y * vec.x) )
@@ -171,17 +180,17 @@ class Point(object):
     def tripleProd (self,vec0,vec1):
         """Returns the triple product of three 3D vectors.
 
-           The scalar triple product (also called the mixed product, box product, or triple scalar product) 
+           The scalar triple product (also called the mixed product, box product, or triple scalar product)
            is defined as the dot product of one of the vectors with the cross product of the other two:
                triple product: this.(vec0 X vec1).
 
-           Geometrically, the scalar triple product is the (signed) volume 
+           Geometrically, the scalar triple product is the (signed) volume
            of the parallelepiped defined by the three vectors given, or six
-           times the volume of the tetrahedron (the volume of any pyramid is 
-           one third the area of the base times the height). 
+           times the volume of the tetrahedron (the volume of any pyramid is
+           one third the area of the base times the height).
 
-           Here, the parentheses may be omitted without causing ambiguity, 
-           since the dot product cannot be evaluated first. 
+           Here, the parentheses may be omitted without causing ambiguity,
+           since the dot product cannot be evaluated first.
            If it were, it would leave the cross product of a scalar and a vector, which is not defined.
 
            @see https://en.wikipedia.org/wiki/Triple_product
@@ -194,15 +203,15 @@ class Point(object):
         return sqrt(self.dotProd(self))
 
     def normalize(self):
-        "Make this a unit vector.""" 
+        "Make this a unit vector."""
         d = self.len()
         if d > 0:
            self *= 1.0/d
         return self
-  
-######################################################################################### 
 
-## Two points define a straight line. 
+#########################################################################################
+
+## Two points define a straight line.
 #  A line is represented by a starting (or origin) and ending points, thus defining a direction.
 #
 class Line(object):
@@ -216,11 +225,11 @@ class Line(object):
         self.p1 = p1
         ## line ending point
         self.p2 = p2
-        ## line direction 
-        self.dir = p2 - p1 
+        ## line direction
+        self.dir = p2 - p1
 
     def __repr__(self):
-        return str(self.p1) + " + " + str(self.dir) + "*t"  
+        return str(self.p1) + " + " + str(self.dir) + "*t"
 
     def __eq__(self, other):
         return self.p1 == other.p1 and self.dir == other.dir
@@ -254,10 +263,10 @@ class Line(object):
            @see http://paulbourke.net/geometry/pointlineplane/
         """
 
-        p1 = self.p1 
-        p2 = self.p2 
-        p3 = that.p1 
-        p4 = that.p2 
+        p1 = self.p1
+        p2 = self.p2
+        p3 = that.p1
+        p4 = that.p2
 
         # p3 == p4 or p1 == p2
         if p3.close(p4) or p1.close(p2):  # line constructor already do this
@@ -308,7 +317,7 @@ class Line(object):
         if l is None:
            return self.atT(ta)
         else:
-           None  
+           None
 
     def midpoint(self):
         """Returns the middle point of this segment."""
@@ -338,14 +347,22 @@ class Line(object):
             u = numer/denom
         return (p1 + u * p12, u)
 
-######################################################################################### 
+    def draw(self):
+        glLineWidth(2.5);
+        glColor3f(0.75, 0.5, 0.25);
+        glBegin(GL_LINES);
+        glVertex3f(self.p1.x, self.p1.y, self.p1.z);
+        glVertex3f(self.p2.x, self.p2.y, self.p2.z);
+        glEnd();
 
-## In elementary geometry, a polygon is a plane figure that is 
-#  bounded by a finite chain of straight line segments, closing in 
-#  a loop, to form a closed polygonal chain or circuit. 
+#########################################################################################
+
+## In elementary geometry, a polygon is a plane figure that is
+#  bounded by a finite chain of straight line segments, closing in
+#  a loop, to form a closed polygonal chain or circuit.
 #
-#  These segments are called its edges or sides, and the points where 
-#  two edges meet are the polygon's vertices (singular: vertex) or corners. 
+#  These segments are called its edges or sides, and the points where
+#  two edges meet are the polygon's vertices (singular: vertex) or corners.
 #
 class Polygon(object):
     """A class representing a polygon."""
@@ -364,7 +381,7 @@ class Polygon(object):
         self.normal = self.compNormal().normalize()
 
     def __repr__(self):
-        """String representation of this polygon.""" 
+        """String representation of this polygon."""
 
         s = ""
         for point in self.points:
@@ -377,15 +394,15 @@ class Polygon(object):
         """The hash is a tuple of all points sorted on x."""
         return hash(tuple(sorted(self.points, key=lambda p: p.x)))
 
-    ## Calculating a Surface Normal for a triangle or a 3D polygon. 
+    ## Calculating a Surface Normal for a triangle or a 3D polygon.
     #
-    #  A surface normal for a triangle can be calculated by taking the vector cross product 
-    #  of two edges of that triangle. The order of the vertices used in the calculation will 
+    #  A surface normal for a triangle can be calculated by taking the vector cross product
+    #  of two edges of that triangle. The order of the vertices used in the calculation will
     #  affect the direction of the normal (in or out of the face w.r.t. winding).
     #  Also you can use a Newell's method for an arbitrary 3D polygon.
     #
     #  @return normal.
-    #  @see https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal 
+    #  @see https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
     #
     def compNormal(self):
         """Newell's method for getting polygon normal."""
@@ -398,7 +415,7 @@ class Polygon(object):
              p = Point ( a.y*b.z, a.z*b.x, a.x*b.y )
              normal += p
 
-        return normal 
+        return normal
 
     def contains(self, p):
         """Returns True if p is inside this polygon.
@@ -413,10 +430,10 @@ class Polygon(object):
         v0.normalize()
 
         for i in range(1, self.n+1):
-            v1 = self.points[i%self.n] - p 
-            v1.normalize() 
+            v1 = self.points[i%self.n] - p
+            v1.normalize()
             angle = math.acos ( v0.dotProd(v1) )
-            if (self.normal.tripleProd(v0,v1) < 0): 
+            if (self.normal.tripleProd(v0,v1) < 0):
                 angle = -angle
             wn += angle
             v0 = v1
@@ -469,7 +486,7 @@ class Polygon(object):
 #
     def area(self):
         """Returns the area of the polygon."""
-     
+
         n = Point ( 0.0, 0.0, 0.0 )
         v0 = self.points[1]-self.points[0]
 
@@ -485,7 +502,7 @@ class Polygon(object):
 
         box = Box()
         for p in self.points:
-            box.add(p) 
+            box.add(p)
 
         l = box.len()
         r = lambda i: box[0][i] + random() * l[i]
@@ -518,10 +535,10 @@ class Polygon(object):
 
         return p
 
-######################################################################################### 
+#########################################################################################
 
-## A triangle is a polygon with three edges and three vertices. 
-#  It is one of the basic shapes in geometry. 
+## A triangle is a polygon with three edges and three vertices.
+#  It is one of the basic shapes in geometry.
 #  A triangle with vertices A, B, and C is denoted △ A B C.
 #
 #  Three non-collinear points define a unique triangle and a unique plane.
@@ -547,10 +564,10 @@ class Triangle(Polygon):
         C = self.points[2]
         r1 = random()
         r2 = random()
-        # 1 - sqrt(r1) + sqrt(r1) * (1 - r2) + r2 * sqrt(r1) = 1 (baricentric coordinates) 
+        # 1 - sqrt(r1) + sqrt(r1) * (1 - r2) + r2 * sqrt(r1) = 1 (baricentric coordinates)
         return (1 - sqrt(r1)) * A + sqrt(r1) * (1 - r2) * B + r2 * sqrt(r1) * C
 
-######################################################################################### 
+#########################################################################################
 
 ## A bounging box is the smallest rectangle, aligned with the coordinate axes,
 #  which contain a given set of points. In CG, it can be used as an approximation
@@ -562,7 +579,7 @@ class Box(object):
     def __init__(self):
             """Constructs an invalid bouding box."""
 
-            ## Set for lazy calculation of normalization parameters. 
+            ## Set for lazy calculation of normalization parameters.
             self.ready = False
             ## A list with two points: the lower left corner and upper right corner of this box.
             self.bbox = []
@@ -577,11 +594,11 @@ class Box(object):
             return val
 
     def __str__(self):
-            "Return a string representation of this box."""  
+            "Return a string representation of this box."""
             return "%s, %s" % (self[0], self[1])
 
     def __cmp__(self,b):
-            """Return < 0 if self < b, 
+            """Return < 0 if self < b,
               > 0 if self > b,
                 0 if self = b
             """
@@ -595,7 +612,7 @@ class Box(object):
                     p1 = Point(p.x,p.y,p.z)
                     p2 = Point(p.x,p.y,p.z)
                     self.bbox += [p1,p2]
-            else:	
+            else:
                     self.bbox[0].x = min(p.x,self.bbox[0].x)
                     self.bbox[1].x = max(p.x,self.bbox[1].x)
                     self.bbox[0].y = min(p.y,self.bbox[0].y)
@@ -622,7 +639,7 @@ class Box(object):
             return 0.5*(self[0]+self[1])
 
     def len(self):
-            """Return the length (a vector) of the box."""	
+            """Return the length (a vector) of the box."""
             return self[1]-self[0]
 
     def outsidePosition(self):
@@ -657,9 +674,9 @@ class Box(object):
                     self.ready = True
 
             return Point(p.x*self.sx + self.tx, p.y*self.sy + self.ty)
-            
-            
-######################################################################################### 
+
+
+#########################################################################################
 
 def main():
     """Main program for testing."""
@@ -674,24 +691,24 @@ def main():
     print("p2 x p1 = %s (2d)" % p2.crossProd2d(p1))
     print("p1 x p2 = %s" % p1.crossProd(p2))
     print("p2 x p1 = %s" % p2.crossProd(p1))
-    
+
     pol = Polygon([Point(0,0,0), Point(1,0,0), Point(1,1,0), Point(0,1,0)])
     print ("\nPol = %s" % pol)
     print("Pol area = %s" % pol.area())
     print("Pol normal = %s" % pol.normal)
     print("Pol random interior = %s" % pol.interiorPoint())
     print("Pol random exterior = %s" % pol.exteriorPoint())
-    
+
     p = Point(1,2,3)
     print("\np = %s" % p)
     p.normalize()
     print ("p normalized = %s" % p)
-    
+
     p = Point(0.5,0.5,0)
     print("\nPol contains %s: %s" % (p,pol.contains(p)))
     print("Pol contains %s: %s" % (-1*p,pol.contains(-1*p)))
     print("Pol is convex %s" % pol.isConvex())
-    
+
     t = Triangle(Point(1,0,0), Point(0,1,0), Point(0,0,1))
     pol2 = Polygon([Point(1,0,0), Point(0,1,0), Point(1./3,1./3,1./3), Point(0,0,1)])
 
@@ -699,8 +716,8 @@ def main():
     print("t area = %s" % t.area())
 
     print ("\nPol2 = %s" % pol2)
-    print("Pol2 is convex %s" % pol2.isConvex()) 
-    
+    print("Pol2 is convex %s" % pol2.isConvex())
+
     l1 = Line(Point(0,0), Point(5,0))
     l2 = Line(Point(2.5,7), Point(2.5,-7))
     l3 = Line(Point(0.5,0.5,-5), Point(0.5,0.5,5))
@@ -708,7 +725,7 @@ def main():
     print("\nl1 = %s" % l1)
     print("l2 = %s" % l2)
     print("l3 = %s" % l3)
-    
+
     p = Point(2.5, 7.0, 0.0)
     print("\np = %s" % p)
     print ("Dist from p to l1 = %s" % l1.distance(p) )
@@ -726,3 +743,256 @@ def main():
     print("Does l4 intersect pol: %s \n" % pol.doesLineCrossPolygon(l4)[0])
 
 if __name__ == '__main__': sys.exit(main())
+
+
+
+# Myclass
+
+class PLY(object):
+
+    def __init__(self,filename = "/"):
+        self.format = ""
+        self.author = ""
+        self.comment = ""
+        self.variables = []
+        self.n_variables = 0
+        self.n_vertex = 0
+        self.n_faces  = 0
+
+        self.vertex = []
+        self.faces  = []
+
+
+        end_header = 10000
+
+        with open(filename) as f:
+            for ln, line in enumerate(f, 1):
+                words = line.split()
+
+                # Header of PLY file
+                if not( end_header <= ln):
+                    if ( words[0] == "ply"):
+                        print "PLY file FORMAT"
+                    elif (words[0] == "format"):
+                        self.format = line
+                    elif (words[0] == "comment"):
+                        if (words[1] == "made"):
+                            self.autor = " ".join(words[3:])
+                        else:
+                            self.comment = " ".join(words[1:])
+                    elif (words[0] == "element"):
+                        if( words[1] == "face"):
+                            self.n_faces = int(words[2])
+                        elif(words[1] == "vertex"):
+                            self.n_vertex = int(words[2])
+                    elif (words[0] == "property"):
+                        if (words[1] == "float32"):
+                            self.n_variables += 1
+                            self.variables.append(words[2])
+                    elif (words[0] == "end_header"):
+                        end_header = ln
+                else:
+                # Body of PLY file
+                    # Reading vertex
+                    if ( end_header+self.n_vertex >= ln):
+                        self.vertex.append(Point(float(words[0]),float(words[1]),float(words[2])))
+                    # Reading Faces
+                    else:
+                        aux_points = []
+                        for i in xrange(1,int(words[0])+1):
+                            aux_points.append(int(words[i]))
+                        self.faces.append(aux_points)
+
+
+class Poliedry(object):
+
+    def __init__(self, PLY = None):
+
+        if PLY == None:
+            print "PLY não fornecido"
+            exit(0)
+
+        self.vertex = PLY.vertex
+        self.faces  = PLY.faces
+        self.colors = [
+                (0.0,0.0,0.5),
+                (0.0,0.0,1.0),
+                (0.0,0.5,0.0),
+                (0.0,0.5,0.5),
+                (0.0,0.5,1.0),
+                (0.0,1.0,0.0),
+                (0.0,1.0,0.5),
+                (0.0,1.0,1.0),
+                (0.5,0.0,0.0),
+                (0.5,0.0,0.5),
+                (0.5,0.0,1.0),
+                (0.5,0.5,0.0),
+                (0.5,0.5,0.5),
+                (0.5,0.5,1.0),
+                (0.5,1.0,0.0),
+                (0.5,1.0,0.5),
+                (0.5,1.0,1.0),
+                (1.0,0.0,0.0),
+                (1.0,0.0,0.5),
+                (1.0,0.0,1.0),
+                (1.0,0.5,0.0),
+                (1.0,0.5,0.5),
+                (1.0,0.5,1.0),
+                (1.0,1.0,0.0),
+                (1.0,1.0,0.5),
+                (1.0,1.0,1.0)
+                ]
+
+
+        # Contructing graph
+
+        # contruindo listas com as arestas de cada face
+        #edges_per_face = [[(face[i],face[i]) for i in xrange(len(face))] for face in self.faces ]
+        edges_per_face = []
+        points_per_face = []
+        polygons = []
+        for face in self.faces:
+            edges_per_face.append([])
+            points_per_face.append([])
+            for i in xrange(len(face)):
+                points_per_face[-1].append(self.vertex[face[i]])
+                if i  != (len(face)-1):
+                    edges_per_face[-1].append((face[i],face[i+1]))
+                else:
+                    edges_per_face[-1].append((face[i],face[0]))
+            polygons.append(Polygon(points_per_face[-1]))
+
+        adjacences_list = []
+
+        # Testando aonde uma aresta pode estar nas outras faces
+        for i in xrange(len(edges_per_face)):
+            adjacences_list.append([])
+            for j in xrange(len(edges_per_face[i])):
+                edge = edges_per_face[i][j]
+                for k in xrange(len(edges_per_face)):
+                    if k != i:
+                        if (edge[1],edge[0]) in edges_per_face[k]:
+                            adjacences_list[i].append(k)
+                            break
+            if len(edges_per_face[i]) != len(adjacences_list[i]):
+                print "Inconsistence in graph contruction"
+
+        self.edges_per_face   = edges_per_face
+        self.poitns_per_face  = points_per_face
+        self.adjacences_list  = adjacences_list
+        self.polygons         = polygons
+
+        self.selected = [0 for elem in edges_per_face]
+
+        #self.selected[0] = 1
+        #self.selected[-1] = 1
+
+
+        return
+
+    # Function to select a face
+    def unselect_face(self):
+        for i in xrange(len(self.selected)):
+            self.selected[i] = 0.
+        return
+
+    # Function to select a face
+    def selected_face(self):
+        for i in xrange(len(self.selected)):
+            if self.selected[i] == 1.:
+                return i
+        return
+
+    def draw(self):
+        for i,face in enumerate(self.faces):
+            # informando ao OpenGl o que vou desenhar
+            if ( len(face) % 3 == 0):
+                glBegin(GL_TRIANGLES)
+            elif ( len(face) % 4 == 0):
+                glBegin(GL_QUADS)
+            else:
+                glBegin(GL_POLYGON)
+
+            # vendo se é escolhido
+            if(self.selected[i] == 1):
+                glColor3f(0.,0.,0.)
+            else:
+                c = self.colors[i % len(self.colors)]
+                glColor3f(c[0],c[1],c[2])
+
+            for point in face:
+                p = self.vertex[point]
+                glVertex3f(p.x,p.y,p.z)
+
+            glEnd()
+
+    def face_select(self,ray):
+        face_to_select = -1
+        smaller_u = 100000000000.0
+
+
+        for i,poly in enumerate(self.polygons):
+            result = ray.intersectToPlane(poly)
+
+            if not(result == None) and (poly.contains(result[0])):
+                if result[1] < smaller_u:
+                    smaller_u = result[1]
+                    face_to_select = i
+
+
+        if face_to_select != -1:
+            print "Selecte face %d" % face_to_select
+            self.selected[face_to_select] = 1.0
+            return True
+        else:
+            print "No face selected"
+
+    def open_like_BFS(self):
+        q0 = self.selected_face()
+        Q = Queue()
+        Q.put(q0)
+        visite1 = [0. for i in self.faces]
+
+        while not(Q.empty()):
+            q1 = Q.get()
+            for v in self.adjacences_list[q1]:
+                if visite1[v] == 0. :
+                    visite1[v] = 1.
+
+                    N1 = self.polygons[q1].compNormal().normalize()
+                    N2 = self.polygons[v].compNormal().normalize()
+
+                    ang = arccos(N1.dotProd(N2))
+
+                    axis = N1.crossProd(N2)
+                    
+                    print "Face %d" % q1
+                    print ang
+                    print axis
+                    Q.put(v)
+                    
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
