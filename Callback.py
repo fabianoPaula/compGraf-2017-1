@@ -178,8 +178,8 @@ def Draw ():
     #glPushMatrix();				            # NEW: Prepare Dynamic Transform
     glMultMatrixf(g_Transform); 		    # NEW: Apply Dynamic Transform
 
-    if g_isFaceSelected:
-        RAY.draw()
+    #if g_isFaceSelected:
+    #    RAY.draw()
     POLIEDRY.draw()
 
 
