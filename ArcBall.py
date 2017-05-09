@@ -111,7 +111,7 @@ class ArcBallT:
         # Perp = Vector3fT ()
         Perp = Vector3fCross(self.m_StVec, self.m_EnVec);
 
-        NewRot = Quat4fT ()
+        NewRot = Quat4fT()
         # //Compute the length of the perpendicular vector
         if (Vector3fLength(Perp) > Epsilon):		#    //if its non-zero
             # //We're ok, so return the perpendicular vector as the transform after all
@@ -122,7 +122,7 @@ class ArcBallT:
             NewRot[W] = Vector3fDot(self.m_StVec, self.m_EnVec);
         else:		#                            //if its zero
             # //The begin and end vectors coincide, so return a quaternion of zero matrix (no rotation)
-            NewRot.X = NewRot.Y = NewRot.Z = NewRot.W = 0.0;
+            NewRot[X] = NewRot[Y] = NewRot[Z] = NewRot[W] = 0.0;
                 
         return NewRot
 
