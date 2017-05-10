@@ -110,12 +110,6 @@ def get_mouse_position_transform(winX,winY,z1):
     ProjMatrix  = glGetDoublev(GL_PROJECTION_MATRIX)
     Viewport    = glGetIntegerv(GL_VIEWPORT)
 
-    #print "# Matrix of the moment"
-    #print Viewport
-    #print ModelMatrix
-    #print ProjMatrix
-    #z1 = glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)
-
     (newX,newY,newZ) = gluUnProject(winX,480 - winY,z1,ModelMatrix,ProjMatrix,Viewport)
     return Point(newX,newY,newZ)
 
@@ -129,22 +123,21 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
     global POLIEDRY,g_isFaceSelected,RAY
 
     if button_state == GLUT_DOWN:
-        if not(g_isFaceSelected) and (button == GLUT_LEFT_BUTTON):
-            p_s0 = get_mouse_position_transform(cursor_x,cursor_y,0.0)
-            p_s1 = get_mouse_position_transform(cursor_x,cursor_y,1.0)
-
-            RAY = Line(p_s0,p_s1)
-
-            if POLIEDRY.face_select(RAY):
+        p_s0 = get_mouse_position_transform(cursor_x,cursor_y,0.0)
+        p_s1 = get_mouse_position_transform(cursor_x,cursor_y,1.0)
+        RAY = Line(p_s0,p_s1)
+        if (g_isFaceSelected == False)and(button == GLUT_LEFT_BUTTON):
+            if(POLIEDRY.face_intersect(RAY) != -1):
+                POLIEDRY.face_select(POLIEDRY.last_face_clicked)
+                print "Seleted face %d" % POLIEDRY.face_selected
                 g_isFaceSelected = True
         else:
-            if (button == GLUT_LEFT_BUTTON):
-                POLIEDRY.unselect_face()
+            if (button == GLUT_LEFT_BUTTON)and(POLIEDRY.face_intersect(RAY) == POLIEDRY.face_selected):
+                print "Face unselected"
+                POLIEDRY.face_unselect()
                 g_isFaceSelected = False
-            elif (button == GLUT_RIGHT_BUTTON): 
+            elif (button == GLUT_RIGHT_BUTTON):
                 POLIEDRY.open_like_BFS()
-
-
 
     g_isDragging = False
     #if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
