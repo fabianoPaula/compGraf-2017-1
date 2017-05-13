@@ -18,9 +18,15 @@ from random import random
 from math import sqrt
 import sys, math, numpy
 
-from Queue import Queue
+from copy import *
+
+import matrix
+
+import Queue
 
 from numpy import arccos
+
+import numpy as np
 
 ## Tolerance used for checking equalities.
 EPS = 0.001
@@ -130,6 +136,11 @@ class Point(object):
     ## Operator c * self
     def __lmul__(self, c):
         return self * c
+
+    def transform(self,A):
+        vec = np.array([[self.x],[self.y],[self.z],[1.0]])
+        newvec = np.dot(A,vec)
+        return 1/newvec[3] * Point(newvec[0],newvec[1],newvec[2])
 
     ## Operator *=
     def __imul__ (self,c):
@@ -380,6 +391,9 @@ class Polygon(object):
         ## normal vector of the given polygon
         self.normal = self.compNormal().normalize()
 
+        if not self.ccw():
+            self.normal = -self.normal
+
     def __repr__(self):
         """String representation of this polygon."""
 
@@ -465,7 +479,7 @@ class Polygon(object):
 
     def ccw(self):
         """Returns True if the points are provided in CCW order."""
-        return ccw(self.points[0], self.points[1], self.points[2])
+        return ccw3(self.points[0], self.points[1], self.points[2], self.normal)
 
 ##
 #       calculates the area of a planar polygon.
@@ -843,6 +857,8 @@ class Poliedry(object):
                 (1.0,1.0,1.0)
                 ]
 
+        self.isOpened = False
+
 
         # Contructing graph
 
@@ -850,19 +866,30 @@ class Poliedry(object):
         #edges_per_face = [[(face[i],face[i]) for i in xrange(len(face))] for face in self.faces ]
         edges_per_face = []
         points_per_face = []
+        points_per_face_orig = []
         polygons = []
+        polygons_orig = []
+        #print len(self.vertex)
+        #print len(self.faces)
+
         for face in self.faces:
+            #print face
             edges_per_face.append([])
             points_per_face.append([])
+            points_per_face_orig.append([])
             for i in xrange(len(face)):
-                points_per_face[-1].append(self.vertex[face[i]])
+                points_per_face[-1].append(deepcopy(self.vertex[face[i]]))
+                points_per_face_orig[-1].append(deepcopy(self.vertex[face[i]]))
                 if i  != (len(face)-1):
                     edges_per_face[-1].append((face[i],face[i+1]))
                 else:
                     edges_per_face[-1].append((face[i],face[0]))
             polygons.append(Polygon(points_per_face[-1]))
+            polygons_orig.append(Polygon(points_per_face_orig[-1]))
+            #print edges_per_face[-1]
 
         adjacences_list = []
+        edge_between_faces = {}
 
         # Testando aonde uma aresta pode estar nas outras faces
         for i in xrange(len(edges_per_face)):
@@ -871,36 +898,30 @@ class Poliedry(object):
                 edge = edges_per_face[i][j]
                 for k in xrange(len(edges_per_face)):
                     if k != i:
-                        if (edge[1],edge[0]) in edges_per_face[k]:
+                        if (((edge[1],edge[0]) in edges_per_face[k])or((edge[0],edge[1]) in edges_per_face[k])) :
                             adjacences_list[i].append(k)
+                            edge_between_faces[(i,k)] = edge
+                            edge_between_faces[(k,i)] = edge
                             break
             if len(edges_per_face[i]) != len(adjacences_list[i]):
                 print "Inconsistence in graph contruction"
 
         self.edges_per_face   = edges_per_face
-        self.poitns_per_face  = points_per_face
+        self.points_per_face  = points_per_face
+        self.points_per_face_orig  = points_per_face_orig
         self.adjacences_list  = adjacences_list
         self.polygons         = polygons
-
+        self.polygons_orig    = polygons_orig
+        self.edge_between_faces = edge_between_faces
         self.selected = [0 for elem in edges_per_face]
-
-        #self.selected[0] = 1
-        #self.selected[-1] = 1
+        self.face_selected = -1
 
 
-        return
-
-    # Function to select a face
-    def unselect_face(self):
-        for i in xrange(len(self.selected)):
-            self.selected[i] = 0.
-        return
-
-    # Function to select a face
-    def selected_face(self):
-        for i in xrange(len(self.selected)):
-            if self.selected[i] == 1.:
-                return i
+        for i,poly in enumerate(self.polygons_orig):
+            if poly.ccw():
+                print "Face %d está no sentido anti-horário" % i
+            else:
+                print "Face %d está no sentido horário" % i
         return
 
     def draw(self):
@@ -920,79 +941,103 @@ class Poliedry(object):
                 c = self.colors[i % len(self.colors)]
                 glColor3f(c[0],c[1],c[2])
 
-            for point in face:
-                p = self.vertex[point]
-                glVertex3f(p.x,p.y,p.z)
+            if self.isOpened:
+                for point in self.points_per_face[i]:
+                    glVertex3f(point.x,point.y,point.z)
+            else:
+                for point in self.points_per_face_orig[i]:
+                    glVertex3f(point.x,point.y,point.z)
+
 
             glEnd()
 
-    def face_select(self,ray):
+    def face_intersect(self,ray):
         face_to_select = -1
-        smaller_u = 100000000000.0
-
+        smaller_u = 100000000000000000.0
 
         for i,poly in enumerate(self.polygons):
             result = ray.intersectToPlane(poly)
-
             if not(result == None) and (poly.contains(result[0])):
-                if result[1] < smaller_u:
-                    smaller_u = result[1]
+                if abs(result[1]) < abs(smaller_u):
+                    smaller_u = abs(result[1])
                     face_to_select = i
 
-
         if face_to_select != -1:
-            print "Selecte face %d" % face_to_select
-            self.selected[face_to_select] = 1.0
-            return True
-        else:
-            print "No face selected"
+            self.last_face_clicked = face_to_select
+            return face_to_select
+        return -1
 
-    def open_like_BFS(self):
-        q0 = self.selected_face()
-        Q = Queue()
-        Q.put(q0)
-        visite1 = [0. for i in self.faces]
+    def face_select(self,i):
+        self.selected[self.last_face_clicked] = 1.
+        self.face_selected = self.last_face_clicked
 
-        while not(Q.empty()):
-            q1 = Q.get()
+    def face_unselect(self):
+        self.selected[self.face_selected] = 0.
+        self.face_selected = -1
+
+    def open_like_BFS(self,alpha):
+        Q = []
+        visite1 = [False for i in self.faces]
+        transf_vec = [None for i in self.faces]
+        altura = [0 for i in self.faces]
+
+        q0 = self.face_selected
+        Q.append(q0)
+        visite1[q0] = True
+        transf_vec[q0] = matrix.identity()
+        altura[q0] = 1.
+
+        #for i,poly in enumerate(self.polygons_orig):
+        #    if poly.ccw():
+        #        print "Face %d está no sentido anti-horário" % i
+        #    else:
+        #        print "Face %d está no sentido horário" % i
+
+        while len(Q) > 0:
+            q1 = Q.pop(0)
             for v in self.adjacences_list[q1]:
-                if visite1[v] == 0. :
-                    visite1[v] = 1.
+                if visite1[v] == False :
+                    visite1[v] = True
+                    Q.append(v)
+                    altura[v] = altura[q0] + 1
 
-                    N1 = self.polygons[q1].compNormal().normalize()
-                    N2 = self.polygons[v].compNormal().normalize()
+                    #print "------------------------------------------------"
+                    #print (q1,v)
 
-                    ang = arccos(N1.dotProd(N2))
+                    N1 = self.polygons_orig[q1].normal
+                    N2 = self.polygons_orig[v].normal
 
-                    axis = N1.crossProd(N2)
-                    
-                    print "Face %d" % q1
-                    print ang
-                    print axis
-                    Q.put(v)
-                    
+                    (np1,np2) = self.edge_between_faces[(q1,v)]
 
- 
+                    v0 = self.vertex[np1]
+                    v1 = self.vertex[np2]
 
+                    edge = Line(v0,v1)
+                    # ângulo de rotação
+                    # para testar o ângulo é preciso fazer o produto interno
+                    ang = np.rad2deg(arccos(N1.dotProd(N2)))
+                    # Eixo de rotação
+                    # edge.dir
 
+                    axis = edge.dir
 
+                    if axis.tripleProd(N1,N2) > 0:
+                        ang = -ang
 
+                    ang = alpha*ang
 
+                    R = matrix.translateAndRotate(ang,v1,edge.dir)
+                    #R = matrix.translateAndRotate(ang,v0,edge.dir)
 
+                    transf_vec[v] = matrix.dot(transf_vec[q1],R)
+                    #transf_vec[v] = R
 
+                    for i in xrange(len(self.points_per_face[v])):
+                        self.points_per_face[v][i] =\
+                        self.points_per_face_orig[v][i].transform(transf_vec[v])
 
+    def open(self):
+        self.isOpened = True
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def close(self):
+        self.isOpened = False
