@@ -10,6 +10,7 @@
 # @author Paulo Cavalcanti
 # @since 13/02/2017
 # @see http://3dengine.org/Rotate_arb
+# @see http://www.python-course.eu/matrix_arithmetic.php
 #
 import sys, math
 import numpy as np 
@@ -56,7 +57,7 @@ def scale(sx,sy,sz):
 #  @return rotation matrix.
 #
 def rotate(ang, x,y,z):
-    ang *= math.pi / 180.0
+    ang = np.deg2rad(ang)
     c=cos(ang)
     s=sin(ang)
     t=1-c
@@ -131,6 +132,49 @@ def translateAndRotate(ang, p, axis):
         rotate(ang, axis.x, axis.y, axis.z) * \
         translate(-p.x,-p.y,-p.z)
 	return T
+
+## Apply a given transformation t, using p as the fixed point.
+def translateAndTransform(t, p):
+	T = translate(p.x,p.y,p.z) * t * translate(-p.x,-p.y,-p.z)
+	return T
+
+## Return a rotation matrix, given three angles in the order: ZYX
+#
+#  @see http://www.chrobotics.com/library/understanding-euler-angles
+#  @param angles a list with angle x, y and z.
+#  @return a matrix Z * Y * X
+#
+def rotateZYX(angles):
+	m1 = rotate(angles[2], 0.0, 0.0, 1.0)
+	m2 = rotate(angles[1], 0.0, 1.0, 0.0)
+	m3 = rotate(angles[0], 1.0, 0.0, 0.0)
+	# m1 x m2 x m3
+	m = dot(dot(m1,m2),m3)
+	return np.asarray(m)
+
+## Return a rotation matrix, given three angles in the order: XYZ
+#
+#  @see http://www.chrobotics.com/library/understanding-euler-angles
+#  @param angles a list with angle x, y and z.
+#  @return a matrix X * Y * Z
+#
+def rotateXYZ(angles):
+
+	return rotateZYX(angles).T
+
+## Returns a rotation matrix about a given axis.
+#
+#  @param angle rotation angle in degrees.
+#  @param axis: 0 - x, 1 - y, 2 - z
+#  @return rotation matrix.
+#
+def getRotationMatrix(angle, axis):
+	if axis == 0:
+		return rotate(angle, 1.0, 0.0, 0.0)
+	elif axis == 1:
+		return rotate(angle, 0.0, 1.0, 0.0)
+	else:
+		return rotate(angle, 0.0, 0.0, 1.0)
 
 ## Main program for testing.
 def main():
