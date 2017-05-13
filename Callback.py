@@ -39,7 +39,7 @@ RAY = Line(Point(0.0,0.0,0.0,),Point(1.0,1.0,1.0))
 
 ModelMatrix = None
 
-profundidade = 6.0
+profundidade = 12.0
 translating_rate = 1.0
 
 def set_poliedry(poliedry = None):
@@ -137,7 +137,10 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
                 POLIEDRY.face_unselect()
                 g_isFaceSelected = False
             elif (button == GLUT_RIGHT_BUTTON):
-                POLIEDRY.open_like_BFS()
+                if POLIEDRY.isOpened:
+                    POLIEDRY.close()
+                else:
+                    POLIEDRY.open()
 
     g_isDragging = False
     #if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
@@ -158,8 +161,12 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
         g_ArcBall.click (mouse_pt)						# Update Start Vector And Prepare For Dragging
     return
 
+alpha = 0.
+factor = 1./100.
+
 def Draw ():
     global POLIEDRY,RAY,profundidade,g_isFaceSelected
+    global alpha,factor
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); # Clear Screen And Depth Buffer
     glLoadIdentity();				        # Reset The Current Modelview Matrix
@@ -170,9 +177,21 @@ def Draw ():
 
     #glPushMatrix();				            # NEW: Prepare Dynamic Transform
     glMultMatrixf(g_Transform); 		    # NEW: Apply Dynamic Transform
+    
+    if g_isFaceSelected:
+        RAY.draw()
 
-    #if g_isFaceSelected:
-    #    RAY.draw()
+    if POLIEDRY.isOpened:
+        POLIEDRY.open_like_BFS(alpha)
+        alpha += factor
+        #print "Alpha: %f" % alpha
+        if((alpha >= 1)or(alpha < 0.)):
+            factor *= -1.
+            
+
+
+    #print "Alpha: %f" % alpha
+
     POLIEDRY.draw()
 
 
