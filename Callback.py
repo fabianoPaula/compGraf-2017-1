@@ -39,7 +39,7 @@ RAY = Line(Point(0.0,0.0,0.0,),Point(1.0,1.0,1.0))
 
 ModelMatrix = None
 
-profundidade = 12.0
+profundidade = 6.0
 translating_rate = 1.0
 
 def set_poliedry(poliedry = None):
@@ -74,6 +74,7 @@ def keyPressed(*args):
     global g_quadratic
     global profundidade
     global translating_rate
+    global POLIEDRY,alpha
     # If escape is pressed, kill everything.
     key = args [0]
     if key == ESCAPE:
@@ -85,6 +86,16 @@ def keyPressed(*args):
     elif key == '\152':
     # key == 'j':
         profundidade -= translating_rate
+    elif key == '\157':
+    # key == 'o':
+        if POLIEDRY.face_selected == -1:
+            print "Please, Select a face to open the poliedry"
+            return
+        alpha = 0.
+        POLIEDRY.open()
+    elif key == 'c':
+    # key == 'c':
+        POLIEDRY.close()
 
 
 def Upon_Drag (cursor_x, cursor_y):
@@ -127,20 +138,16 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
         p_s1 = get_mouse_position_transform(cursor_x,cursor_y,1.0)
         RAY = Line(p_s0,p_s1)
         if (g_isFaceSelected == False)and(button == GLUT_LEFT_BUTTON):
+            print "Estou vendo o evento"
             if(POLIEDRY.face_intersect(RAY) != -1):
                 POLIEDRY.face_select(POLIEDRY.last_face_clicked)
                 print "Seleted face %d" % POLIEDRY.face_selected
                 g_isFaceSelected = True
-        else:
-            if (button == GLUT_LEFT_BUTTON)and(POLIEDRY.face_intersect(RAY) == POLIEDRY.face_selected):
+        elif (POLIEDRY.face_intersect(RAY) == POLIEDRY.face_selected)and\
+                (POLIEDRY.isOpened == False):
                 print "Face unselected"
                 POLIEDRY.face_unselect()
                 g_isFaceSelected = False
-            elif (button == GLUT_RIGHT_BUTTON):
-                if POLIEDRY.isOpened:
-                    POLIEDRY.close()
-                else:
-                    POLIEDRY.open()
 
     g_isDragging = False
     #if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
@@ -178,8 +185,8 @@ def Draw ():
     #glPushMatrix();				            # NEW: Prepare Dynamic Transform
     glMultMatrixf(g_Transform); 		    # NEW: Apply Dynamic Transform
     
-    if g_isFaceSelected:
-        RAY.draw()
+    #if g_isFaceSelected:
+    RAY.draw()
 
     if POLIEDRY.isOpened:
         POLIEDRY.open_like_BFS(alpha)

@@ -917,11 +917,11 @@ class Poliedry(object):
         self.face_selected = -1
 
 
-        for i,poly in enumerate(self.polygons_orig):
-            if poly.ccw():
-                print "Face %d está no sentido anti-horário" % i
-            else:
-                print "Face %d está no sentido horário" % i
+#        for i,poly in enumerate(self.polygons_orig):
+#            if poly.ccw():
+#                print "Face %d está no sentido anti-horário" % i
+#            else:
+#                print "Face %d está no sentido horário" % i
         return
 
     def draw(self):
@@ -955,17 +955,15 @@ class Poliedry(object):
         face_to_select = -1
         smaller_u = 100000000000000000.0
 
-        for i,poly in enumerate(self.polygons):
+        for i,poly in enumerate(self.polygons_orig):
             result = ray.intersectToPlane(poly)
             if not(result == None) and (poly.contains(result[0])):
                 if abs(result[1]) < abs(smaller_u):
                     smaller_u = abs(result[1])
                     face_to_select = i
 
-        if face_to_select != -1:
-            self.last_face_clicked = face_to_select
-            return face_to_select
-        return -1
+        self.last_face_clicked = face_to_select
+        return face_to_select
 
     def face_select(self,i):
         self.selected[self.last_face_clicked] = 1.
@@ -987,11 +985,7 @@ class Poliedry(object):
         transf_vec[q0] = matrix.identity()
         altura[q0] = 1.
 
-        #for i,poly in enumerate(self.polygons_orig):
-        #    if poly.ccw():
-        #        print "Face %d está no sentido anti-horário" % i
-        #    else:
-        #        print "Face %d está no sentido horário" % i
+        self.points_per_face[q0] = deepcopy(self.points_per_face_orig[q0])
 
         while len(Q) > 0:
             q1 = Q.pop(0)

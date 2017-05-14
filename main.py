@@ -40,7 +40,7 @@
 from OpenGL.GL   import *
 from OpenGL.GLUT import *
 from OpenGL.GLU  import *
-import sys
+import sys,os
 
 from lib import *
 
@@ -90,9 +90,17 @@ def main():
     # pass arguments to init
     glutInit(sys.argv)
 
-	#filename = raw_input('Entre com o nome do arquivo .ply:')
-    filename = "cube.ply"
+    #filename = raw_input('Entre com o nome do arquivo .ply: ')
+    #filename = "cube.ply"
+    #filename =  os.getcwd()+"/" + filename
+    #filename = "../" + filename
+    #print "/"+filename+"/"
+    filename = sys.argv[1]
+    print filename
 
+    #poliedry = Poliedry(PLY("cube.ply"))
+    #poliedry = Poliedry(PLY("ply/regular/icosahedron.ply"))
+    
     poliedry = Poliedry(PLY(filename))
 
     set_poliedry(poliedry)
