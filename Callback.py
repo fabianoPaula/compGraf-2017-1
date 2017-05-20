@@ -8,8 +8,8 @@ import copy
 
 from ArcBall import * 		# ArcBallT and this tutorials set of points/vectors/matrix types
 
-from lib.geometry import Point,Line
-from lib.matrix import *
+from lib.geometry import Point,Line,Box
+import lib.matrix as matrix
 
 import numpy as np
 
@@ -36,10 +36,11 @@ g_isFaceSelected = False
 
 POLIEDRY = None
 RAY = Line(Point(0.0,0.0,0.0,),Point(1.0,1.0,1.0))
+BOX = Box()
 
 ModelMatrix = None
 
-profundidade = 6.0
+profundidade = 12.0
 translating_rate = 1.0
 
 def set_poliedry(poliedry = None):
@@ -66,6 +67,8 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 
     glEnable (GL_COLOR_MATERIAL)
 
+    BOX.add(Point(0,0,0))
+    BOX.add(Point(3,3,1))
 
     return True
 
@@ -86,7 +89,17 @@ def keyPressed(*args):
     elif key == '\152':
     # key == 'j':
         profundidade -= translating_rate
-    elif key == '\157':
+    elif key == 'a':
+    # key == 'a':
+        if POLIEDRY.face_selected == -1:
+            print "Please, Select a face to open the poliedry"
+            return
+        alpha = 0.
+        POLIEDRY.animate()
+    elif key == 's':
+    # key == 's':
+        POLIEDRY.static()
+    elif key == 'o':
     # key == 'o':
         if POLIEDRY.face_selected == -1:
             print "Please, Select a face to open the poliedry"
@@ -96,6 +109,12 @@ def keyPressed(*args):
     elif key == 'c':
     # key == 'c':
         POLIEDRY.close()
+    elif key == 't':
+    # key == 't':
+        POLIEDRY.transform(matrix.translate(1.,1.,1.))
+    elif key == 'r':
+    # key == 't':
+        POLIEDRY.transform(matrix.translate(-1.,-1.,-1.))
 
 
 def Upon_Drag (cursor_x, cursor_y):
@@ -188,22 +207,23 @@ def Draw ():
     #if g_isFaceSelected:
     RAY.draw()
 
-    if POLIEDRY.isOpened:
+    BOX.draw()
+
+    if POLIEDRY.isAnimated:
         POLIEDRY.open_like_BFS(alpha)
         alpha += factor
         #print "Alpha: %f" % alpha
         if((alpha >= 1)or(alpha < 0.)):
             factor *= -1.
             
-
+    if POLIEDRY.isOpened:
+        POLIEDRY.open_like_BFS(1.0)
 
     #print "Alpha: %f" % alpha
-
     POLIEDRY.draw()
 
+    #glPopMatrix();	    	            # NEW: Unapply Dynamic Transform
 
-    #glPopMatrix();				            # NEW: Unapply Dynamic Transform
-
-    glFlush ();                             # Flush The GL Rendering Pipeline
+    glFlush();                             # Flush The GL Rendering Pipeline
     glutSwapBuffers()
     return

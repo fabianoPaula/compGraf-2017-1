@@ -16,15 +16,12 @@ from OpenGL.GLU import *
 
 from random import random
 from math import sqrt
-import sys, math, numpy
+import sys
+import math
 
-from copy import *
+import copy
 
 import matrix
-
-import Queue
-
-from numpy import arccos
 
 import numpy as np
 
@@ -590,104 +587,146 @@ class Triangle(Polygon):
 class Box(object):
     """A class for computing bounding boxes."""
 
-    def __init__(self):
-            """Constructs an invalid bouding box."""
+    def __init__(self,p1=Point(0.,0.,0.), p2=Point(1.0,0.0,0.0)):
+        """Constructs an invalid bouding box."""
 
-            ## Set for lazy calculation of normalization parameters.
-            self.ready = False
-            ## A list with two points: the lower left corner and upper right corner of this box.
-            self.bbox = []
+        ## Set for lazy calculation of normalization parameters.
+        self.ready = False
+        ## A list with two points: the lower left corner and upper right corner of this box.
+        self.bbox = []
+        self.add(p1)
+        self.add(p2)
+
+        ## A polygon of the points that make the structure
+        self.polygon = None
+        self.buildQuad()
 
     def __getitem__(self, ind):
-            """Indexing operator."""
-            return self.bbox[ind]
+        """Indexing operator."""
+        return self.bbox[ind]
 
     def __setitem__(self, ind, val):
-            """Indexing operator."""
-            self.bbox[ind] = val
-            return val
+        """Indexing operator."""
+        self.bbox[ind] = val
+        return val
 
     def __str__(self):
-            "Return a string representation of this box."""
-            return "%s, %s" % (self[0], self[1])
+        "Return a string representation of this box."""
+        return "%s, %s" % (self[0], self[1])
 
     def __cmp__(self,b):
-            """Return < 0 if self < b,
-              > 0 if self > b,
-                0 if self = b
-            """
-
-            raise("Undefined")
+        """Return < 0 if self < b,
+          > 0 if self > b,
+            0 if self = b
+        """
+        raise("Undefined")
 
     def add(self,p):
-            """Adds a new point to the bounding box."""
+        """Adds a new point to the bounding box."""
 
-            if not self.bbox:
-                    p1 = Point(p.x,p.y,p.z)
-                    p2 = Point(p.x,p.y,p.z)
-                    self.bbox += [p1,p2]
-            else:
-                    self.bbox[0].x = min(p.x,self.bbox[0].x)
-                    self.bbox[1].x = max(p.x,self.bbox[1].x)
-                    self.bbox[0].y = min(p.y,self.bbox[0].y)
-                    self.bbox[1].y = max(p.y,self.bbox[1].y)
-                    self.bbox[0].z = min(p.z,self.bbox[0].z)
-                    self.bbox[1].z = max(p.z,self.bbox[1].z)
-            return self.bbox
+        if not self.bbox:
+            p1 = Point(p.x,p.y,p.z)
+            p2 = Point(p.x,p.y,p.z)
+            self.bbox += [p1,p2]
+        else:
+            self.bbox[0].x = min(p.x,self.bbox[0].x)
+            self.bbox[1].x = max(p.x,self.bbox[1].x)
+            self.bbox[0].y = min(p.y,self.bbox[0].y)
+            self.bbox[1].y = max(p.y,self.bbox[1].y)
+            self.bbox[0].z = min(p.z,self.bbox[0].z)
+            self.bbox[1].z = max(p.z,self.bbox[1].z)
+        return self.bbox
 
     def contains(self,p):
-            """Return whether this box contains point p."""
-
-            return self[0].x <= p.x and p.x <= self[1].x and \
-           self[0].y <= p.y and p.y <= self[1].y and \
-           self[0].z <= p.z and p.z <= self[1].z
+        """Return whether this box contains point p."""
+        return self[0].x <= p.x and p.x <= self[1].x and \
+            self[0].y <= p.y and p.y <= self[1].y and \
+            self[0].z <= p.z and p.z <= self[1].z
 
     def contains2(self,p):
-            """Return whether this box contains point p."""
-
-            return self[0].x <= p.x and p.x <= self[1].x and \
-           self[0].y <= p.y and p.y <= self[1].y
+        """Return whether this box contains point p."""
+        return self[0].x <= p.x and p.x <= self[1].x and \
+            self[0].y <= p.y and p.y <= self[1].y
 
     def centre(self):
-            """Return the centre of the box."""
-            return 0.5*(self[0]+self[1])
+        """Return the centre of the box."""
+        return 0.5*(self[0]+self[1])
 
     def len(self):
-            """Return the length (a vector) of the box."""
-            return self[1]-self[0]
+        """Return the length (a vector) of the box."""
+        return self[1]-self[0]
 
     def outsidePosition(self):
-            """Return a point outside the box."""
-
-            return [self.centre().x, self.centre().y, self.centre().z + 5*self.len().z, 1.0 ]
+        """Return a point outside the box."""
+        return [self.centre().x, self.centre().y, self.centre().z + 5*self.len().z, 1.0 ]
 
     def setParameters(self):
-            """Calculates the parameters to a normalized box."""
+        """Calculates the parameters to a normalized box."""
 
-            ## Scale factor x.
-            self.sx = 1.0 / (self[1].x-self[0].x)
-            ## Translation factor x.
-            self.tx = -self[0].x * self.sx
+        ## Scale factor x.
+        self.sx = 1.0 / (self[1].x-self[0].x)
+        ## Translation factor x.
+        self.tx = -self[0].x * self.sx
 
-            ## Scale factor y.
-            self.sy = 1.0 / (self[1].y-self[0].y)
-            ## Translation factor y.
-            self.ty = -self[0].y * self.sy
+        ## Scale factor y.
+        self.sy = 1.0 / (self[1].y-self[0].y)
+        ## Translation factor y.
+        self.ty = -self[0].y * self.sy
 
-            return (self.sx, self.sy, self.tx, self.ty)
+        return (self.sx, self.sy, self.tx, self.ty)
 
     def normalize(self,p):
-            """Normalize the given point."""
+        """Normalize the given point."""
 
-            #if not self.contains2(p):
-            #	print("Box: %s, p: %s" % (self,p))
-            #	return None
+        #if not self.contains2(p):
+        #	print("Box: %s, p: %s" % (self,p))
+        #	return None
 
-            if not self.ready:
-                    self.setParameters()
-                    self.ready = True
+        if not self.ready:
+            self.setParameters()
+            self.ready = True
 
-            return Point(p.x*self.sx + self.tx, p.y*self.sy + self.ty)
+        return Point(p.x*self.sx + self.tx, p.y*self.sy + self.ty)
+
+    def buildQuad(self):
+        vector_diff = self.bbox[1] - self.bbox[0]
+        vector_y = Point(0.,vector_diff.y,0.)
+        vector_xz = Point(vector_diff.x,0.,vector_diff.z)
+
+        p1 = self.bbox[0]
+        p2 = self.bbox[0] + vector_xz
+        p3 = self.bbox[1]
+        p4 = self.bbox[0] + vector_y
+
+        self.dv = [p1,p2,p3,p4]
+
+        self.polygon = Polygon(self.dv)
+
+        return self.dv
+
+    def draw(self):
+        """Draw the box in the screen"""
+
+        self.buildQuad()
+
+
+        glLineWidth(2.5)
+        glColor3f(0.75, 0.5, 0.25)
+        glBegin(GL_LINES)
+
+        glVertex3f(self.dv[0].x, self.dv[0].y, self.dv[0].z)
+        glVertex3f(self.dv[1].x, self.dv[1].y, self.dv[1].z)
+
+        glVertex3f(self.dv[1].x, self.dv[1].y, self.dv[1].z)
+        glVertex3f(self.dv[2].x, self.dv[2].y, self.dv[2].z)
+
+        glVertex3f(self.dv[2].x, self.dv[2].y, self.dv[2].z)
+        glVertex3f(self.dv[3].x, self.dv[3].y, self.dv[3].z)
+
+        glVertex3f(self.dv[3].x, self.dv[3].y, self.dv[3].z)
+        glVertex3f(self.dv[0].x, self.dv[0].y, self.dv[0].z)
+
+        glEnd()
 
 
 #########################################################################################
@@ -858,7 +897,7 @@ class Poliedry(object):
                 ]
 
         self.isOpened = False
-
+        self.isAnimated = False
 
         # Contructing graph
 
@@ -868,7 +907,6 @@ class Poliedry(object):
         points_per_face = []
         points_per_face_orig = []
         polygons = []
-        polygons_orig = []
         #print len(self.vertex)
         #print len(self.faces)
 
@@ -878,15 +916,13 @@ class Poliedry(object):
             points_per_face.append([])
             points_per_face_orig.append([])
             for i in xrange(len(face)):
-                points_per_face[-1].append(deepcopy(self.vertex[face[i]]))
-                points_per_face_orig[-1].append(deepcopy(self.vertex[face[i]]))
+                points_per_face[-1].append(copy.deepcopy(self.vertex[face[i]]))
+                points_per_face_orig[-1].append(copy.deepcopy(self.vertex[face[i]]))
                 if i  != (len(face)-1):
                     edges_per_face[-1].append((face[i],face[i+1]))
                 else:
                     edges_per_face[-1].append((face[i],face[0]))
             polygons.append(Polygon(points_per_face[-1]))
-            polygons_orig.append(Polygon(points_per_face_orig[-1]))
-            #print edges_per_face[-1]
 
         adjacences_list = []
         edge_between_faces = {}
@@ -911,7 +947,6 @@ class Poliedry(object):
         self.points_per_face_orig  = points_per_face_orig
         self.adjacences_list  = adjacences_list
         self.polygons         = polygons
-        self.polygons_orig    = polygons_orig
         self.edge_between_faces = edge_between_faces
         self.selected = [0 for elem in edges_per_face]
         self.face_selected = -1
@@ -941,7 +976,7 @@ class Poliedry(object):
                 c = self.colors[i % len(self.colors)]
                 glColor3f(c[0],c[1],c[2])
 
-            if self.isOpened:
+            if (self.isOpened or self.isAnimated):
                 for point in self.points_per_face[i]:
                     glVertex3f(point.x,point.y,point.z)
             else:
@@ -955,7 +990,7 @@ class Poliedry(object):
         face_to_select = -1
         smaller_u = 100000000000000000.0
 
-        for i,poly in enumerate(self.polygons_orig):
+        for i,poly in enumerate(self.polygons):
             result = ray.intersectToPlane(poly)
             if not(result == None) and (poly.contains(result[0])):
                 if abs(result[1]) < abs(smaller_u):
@@ -985,7 +1020,7 @@ class Poliedry(object):
         transf_vec[q0] = matrix.identity()
         altura[q0] = 1.
 
-        self.points_per_face[q0] = deepcopy(self.points_per_face_orig[q0])
+        self.points_per_face[q0] = copy.deepcopy(self.points_per_face_orig[q0])
 
         while len(Q) > 0:
             q1 = Q.pop(0)
@@ -998,8 +1033,8 @@ class Poliedry(object):
                     #print "------------------------------------------------"
                     #print (q1,v)
 
-                    N1 = self.polygons_orig[q1].normal
-                    N2 = self.polygons_orig[v].normal
+                    N1 = self.polygons[q1].normal
+                    N2 = self.polygons[v].normal
 
                     (np1,np2) = self.edge_between_faces[(q1,v)]
 
@@ -1009,7 +1044,7 @@ class Poliedry(object):
                     edge = Line(v0,v1)
                     # ângulo de rotação
                     # para testar o ângulo é preciso fazer o produto interno
-                    ang = np.rad2deg(arccos(N1.dotProd(N2)))
+                    ang = np.rad2deg(math.acos(N1.dotProd(N2)))
                     # Eixo de rotação
                     # edge.dir
 
@@ -1030,8 +1065,24 @@ class Poliedry(object):
                         self.points_per_face[v][i] =\
                         self.points_per_face_orig[v][i].transform(transf_vec[v])
 
+
+
+    def transform(self,T = matrix.identity()):
+        print "Starting transform"
+        for v in xrange(len(self.points_per_face)):
+            print "Transform face %d " % v
+            for i in xrange(len(self.points_per_face[v])):
+                self.points_per_face_orig[v][i] = 1.0*self.points_per_face_orig[v][i].transform(T)
+            self.polygons[v] = Polygon(self.points_per_face_orig[v])
+
     def open(self):
         self.isOpened = True
 
     def close(self):
         self.isOpened = False
+
+    def animate(self):
+        self.isAnimated = True
+
+    def static(self):
+        self.isAnimated = False
