@@ -10,3 +10,5 @@
 *.png
 *.ply
 
+lib/images
+ply/
