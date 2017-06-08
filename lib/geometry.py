@@ -599,7 +599,7 @@ class Box(object):
 
         ## A polygon of the points that make the structure
         self.polygon = None
-        self.buildQuad()
+        
 
     def __getitem__(self, ind):
         """Indexing operator."""
@@ -687,47 +687,6 @@ class Box(object):
             self.ready = True
 
         return Point(p.x*self.sx + self.tx, p.y*self.sy + self.ty)
-
-    def buildQuad(self):
-        vector_diff = self.bbox[1] - self.bbox[0]
-        vector_y = Point(0.,vector_diff.y,0.)
-        vector_xz = Point(vector_diff.x,0.,vector_diff.z)
-
-        p1 = self.bbox[0]
-        p2 = self.bbox[0] + vector_xz
-        p3 = self.bbox[1]
-        p4 = self.bbox[0] + vector_y
-
-        self.dv = [p1,p2,p3,p4]
-
-        self.polygon = Polygon(self.dv)
-
-        return self.dv
-
-    def draw(self):
-        """Draw the box in the screen"""
-
-        self.buildQuad()
-
-
-        glLineWidth(2.5)
-        glColor3f(0.75, 0.5, 0.25)
-        glBegin(GL_LINES)
-
-        glVertex3f(self.dv[0].x, self.dv[0].y, self.dv[0].z)
-        glVertex3f(self.dv[1].x, self.dv[1].y, self.dv[1].z)
-
-        glVertex3f(self.dv[1].x, self.dv[1].y, self.dv[1].z)
-        glVertex3f(self.dv[2].x, self.dv[2].y, self.dv[2].z)
-
-        glVertex3f(self.dv[2].x, self.dv[2].y, self.dv[2].z)
-        glVertex3f(self.dv[3].x, self.dv[3].y, self.dv[3].z)
-
-        glVertex3f(self.dv[3].x, self.dv[3].y, self.dv[3].z)
-        glVertex3f(self.dv[0].x, self.dv[0].y, self.dv[0].z)
-
-        glEnd()
-
 
 #########################################################################################
 
