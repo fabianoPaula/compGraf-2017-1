@@ -44,9 +44,11 @@ import sys,os
 
 from lib import *
 
-from ArcBall import *		# *NEW* ArcBall header
-from Callback    import *		# Draw (), Initialize () and all the real OpenGL work.
-from lib.geometry     import PLY,Poliedry
+from ArcBall    import *		# *NEW* ArcBall header
+from Callback   import *		# Draw (), Initialize () and all the real OpenGL work.
+from polihedron import Polihedron
+from ply        import PLY
+
 
 # Number of the glut window.
 window = 0
@@ -90,18 +92,12 @@ def main():
     # pass arguments to init
     glutInit(sys.argv)
 
-    #filename = raw_input('Entre com o nome do arquivo .ply: ')
-    #filename = "cube.ply"
-    #filename =  os.getcwd()+"/" + filename
-    #filename = "../" + filename
-    #print "/"+filename+"/"
     filename = sys.argv[1]
+    imageFileName = sys.argv[2]
     print filename
+    print imageFileName
 
-    #poliedry = Poliedry(PLY("cube.ply"))
-    #poliedry = Poliedry(PLY("ply/regular/icosahedron.ply"))
-    
-    poliedry = Poliedry(PLY(filename))
+    poliedry = Polihedron(PLY(filename))
 
     set_poliedry(poliedry)
 
@@ -153,7 +149,7 @@ def main():
     # tying in a rendering context, so we are ready to start making immediate mode
     # GL calls.
     # Call to perform inital GL setup (the clear colors, enabling modes
-    Initialize (winX, winY)
+    Initialize (winX, winY,imageFileName)
 
     # Start Event Processing Engine
     glutMainLoop()
