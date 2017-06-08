@@ -44,7 +44,7 @@ class TestContext( object ):
 	#  This method combines all of the functionality required to load the image with PIL, 
 	#  convert it to a format compatible with PyOpenGL, generate the texture ID, 
 	#  and store the image data under that texture ID.
-	def loadImage( self, imageName = "images/velazquez_texture_256.jpg" ):
+	def loadImage( self, imageName = "images/water.jpg" ):
 		"""Load an image file as a 2D texture using PIL"""
 
 		# PIL defines an "open" method which is Image specific!
