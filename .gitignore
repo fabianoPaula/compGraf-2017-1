@@ -11,4 +11,5 @@
 *.ply
 
 lib/images
+images
 ply/
