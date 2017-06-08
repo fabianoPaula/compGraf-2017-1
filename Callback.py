@@ -8,10 +8,12 @@ import copy
 
 from ArcBall import * 		# ArcBallT and this tutorials set of points/vectors/matrix types
 
-from lib.geometry import Point,Line,Box
+from lib.geometry import Point,Line
 import lib.matrix as matrix
 
 import numpy as np
+
+from PIL.Image import open
 
 PI2 = 2.0*3.1415926535		# 2 * PI (not squared!) 		// PI Squared
 
@@ -36,12 +38,13 @@ g_isFaceSelected = False
 
 POLIEDRY = None
 RAY = Line(Point(0.0,0.0,0.0,),Point(1.0,1.0,1.0))
-BOX = Box()
 
 ModelMatrix = None
 
 profundidade = 12.0
 translating_rate = 1.0
+
+imageID = 0
 
 def set_poliedry(poliedry = None):
     global POLIEDRY
@@ -49,8 +52,8 @@ def set_poliedry(poliedry = None):
     print "SAVED"
 
 # A general OpenGL initialization function.  Sets all of the initial parameters.
-def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
-    global g_quadratic, ModelMatrix
+def Initialize (Width, Height, imageName = "images/water.jpg"):				# We call this right after our OpenGL window is created.
+    global g_quadratic, ModelMatrix, imageID
 
     glClearColor(1.0, 1.0, 1.0, 1.0)			# This Will Clear The Background Color To Black
     glClearDepth(1.0)					# Enables Clearing Of The Depth Buffer
@@ -67,8 +70,7 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 
     glEnable (GL_COLOR_MATERIAL)
 
-    BOX.add(Point(0,0,0))
-    BOX.add(Point(3,3,1))
+    imageID = loadImage (imageName)
 
     return True
 
@@ -110,11 +112,15 @@ def keyPressed(*args):
     # key == 'c':
         POLIEDRY.close()
     elif key == 't':
+        POLIEDRY.set_texture()
+    elif key == 'T':
+        POLIEDRY.unset_texture()
+    #elif key == 't':
     # key == 't':
-        POLIEDRY.transform(matrix.translate(1.,1.,1.))
-    elif key == 'r':
+    #    POLIEDRY.transform(matrix.translate(1.,1.,1.))
+    #elif key == 'r':
     # key == 't':
-        POLIEDRY.transform(matrix.translate(-1.,-1.,-1.))
+    #    POLIEDRY.transform(matrix.translate(-1.,-1.,-1.))
 
 
 def Upon_Drag (cursor_x, cursor_y):
@@ -187,6 +193,42 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
         g_ArcBall.click (mouse_pt)						# Update Start Vector And Prepare For Dragging
     return
 
+def loadImage(imageName ):
+    """Load an image file as a 2D texture using PIL"""
+
+    # PIL defines an "open" method which is Image specific!
+    im = open(imageName)
+    try:
+            ix, iy, image = im.size[0], im.size[1], im.tobytes("raw", "RGBA", 0, -1)
+    except (SystemError, ValueError):
+            ix, iy, image = im.size[0], im.size[1], im.tobytes("raw", "RGBX", 0, -1)
+    except AttributeError:
+            ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBX", 0, -1)
+
+    ID = glGenTextures(1)
+
+    glBindTexture(GL_TEXTURE_2D, ID)
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+    return ID
+
+def setupTexture():
+    global imageID
+
+    """Render-time texture environment setup"""
+
+    # Configure the texture rendering parameters
+    glEnable(GL_TEXTURE_2D)
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+    # Re-select our texture, could use other generated textures if we had generated them earlier...
+    glBindTexture(GL_TEXTURE_2D, imageID)
+
+
 alpha = 0.
 factor = 1./100.
 
@@ -200,14 +242,7 @@ def Draw ():
 
     ModelMatrix = glGetDoublev(GL_MODELVIEW_MATRIX)
 
-
-    #glPushMatrix();				            # NEW: Prepare Dynamic Transform
     glMultMatrixf(g_Transform); 		    # NEW: Apply Dynamic Transform
-    
-    #if g_isFaceSelected:
-    RAY.draw()
-
-    BOX.draw()
 
     if POLIEDRY.isAnimated:
         POLIEDRY.open_like_BFS(alpha)
@@ -215,14 +250,16 @@ def Draw ():
         #print "Alpha: %f" % alpha
         if((alpha >= 1)or(alpha < 0.)):
             factor *= -1.
-            
+
     if POLIEDRY.isOpened:
         POLIEDRY.open_like_BFS(1.0)
 
-    #print "Alpha: %f" % alpha
-    POLIEDRY.draw()
+    if POLIEDRY.useTexture:
+        setupTexture()
+    else:
+        glDisable(GL_TEXTURE_2D)
 
-    #glPopMatrix();	    	            # NEW: Unapply Dynamic Transform
+    POLIEDRY.draw()
 
     glFlush();                             # Flush The GL Rendering Pipeline
     glutSwapBuffers()

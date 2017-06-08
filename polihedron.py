@@ -19,9 +19,13 @@ import math
 import copy
 
 from lib import matrix
-from lib.geometry import Point,Polygon,Line
+from lib.geometry import Point,Polygon,Line,Box
 
 import numpy as np
+
+
+
+#from Image import open
 
 
 class Polihedron(object):
@@ -32,6 +36,7 @@ class Polihedron(object):
             print "PLY não fornecido"
             exit(0)
 
+        self.box    = Box()
         self.vertex = PLY.vertex
         self.faces  = PLY.faces
         self.colors = [
@@ -65,6 +70,8 @@ class Polihedron(object):
 
         self.isOpened = False
         self.isAnimated = False
+        self.useTexture = False
+        self.mapRotate  = matrix.identity()
 
         # Contructing graph
 
@@ -118,15 +125,13 @@ class Polihedron(object):
         self.selected = [0 for elem in edges_per_face]
         self.face_selected = -1
 
-
-#        for i,poly in enumerate(self.polygons_orig):
-#            if poly.ccw():
-#                print "Face %d está no sentido anti-horário" % i
-#            else:
-#                print "Face %d está no sentido horário" % i
         return
 
+
+
     def draw(self):
+        points = []
+
         for i,face in enumerate(self.faces):
             # informando ao OpenGl o que vou desenhar
             if ( len(face) % 3 == 0):
@@ -137,17 +142,24 @@ class Polihedron(object):
                 glBegin(GL_POLYGON)
 
             # vendo se é escolhido
-            if(self.selected[i] == 1):
-                glColor3f(0.,0.,0.)
-            else:
-                c = self.colors[i % len(self.colors)]
-                glColor3f(1.0*c[0],1.0*c[1],1.0*c[2])
+            if not self.useTexture:
+                if(self.selected[i] == 1):
+                    glColor3f(0.,0.,0.)
+                else:
+                    c = self.colors[i % len(self.colors)]
+                    glColor3f(1.0*c[0],1.0*c[1],1.0*c[2])
 
             if (self.isOpened or self.isAnimated):
-                for point in self.points_per_face[i]:
-                    glVertex3f(point.x,point.y,point.z)
+                points = self.points_per_face[i]
             else:
-                for point in self.points_per_face_orig[i]:
+                points = self.points_per_face_orig[i]
+
+            for point in points:
+                if self.useTexture:
+                    p = self.box.normalize(point.transform(self.mapRotate))
+                    glTexCoord2f(p.x,p.y)
+                    glVertex3f(point.x,point.y,point.z)
+                else:
                     glVertex3f(point.x,point.y,point.z)
 
 
@@ -232,13 +244,31 @@ class Polihedron(object):
                         self.points_per_face[v][i] =\
                         self.points_per_face_orig[v][i].transform(transf_vec[v])
 
+        if self.useTexture:
+            axis_z = Point(0.,0.,1.)
 
+            angle_z = axis_z.dotProd(self.polygons[q0].normal)
+            axis_r = axis_z.crossProd(self.polygons[q0].normal)
+
+            self.mapRotate = matrix.translateAndRotate(angle_z,axis_r,self.points_per_face[q0][0])
+
+            for points in self.points_per_face:
+                for point in points:
+                    self.box.add(point.transform(self.mapRotate))
+
+            self.box.setParameters()
 
     def open(self):
         self.isOpened = True
 
     def close(self):
         self.isOpened = False
+
+    def set_texture(self):
+        self.useTexture = True
+
+    def unset_texture(self):
+        self.useTexture = False
 
     def animate(self):
         self.isAnimated = True
