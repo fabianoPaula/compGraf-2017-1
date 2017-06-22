@@ -46,9 +46,6 @@ from lib import *
 
 from ArcBall    import *		# *NEW* ArcBall header
 from Callback   import *		# Draw (), Initialize () and all the real OpenGL work.
-from polihedron import Polihedron
-from ply        import PLY
-
 
 # Number of the glut window.
 window = 0
@@ -86,21 +83,10 @@ def ReSizeGLScene(Width, Height):
 
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
 
-
 def main():
     global window
     # pass arguments to init
     glutInit(sys.argv)
-
-    filename = sys.argv[1]
-    imageFileName = sys.argv[2]
-    print filename
-    print imageFileName
-
-    poliedry = Polihedron(PLY(filename))
-
-    set_poliedry(poliedry)
-
 
     # Select type of Display mode:
     #  Double buffer
@@ -149,7 +135,7 @@ def main():
     # tying in a rendering context, so we are ready to start making immediate mode
     # GL calls.
     # Call to perform inital GL setup (the clear colors, enabling modes
-    Initialize (winX, winY,imageFileName)
+    Initialize (winX, winY)
 
     # Start Event Processing Engine
     glutMainLoop()

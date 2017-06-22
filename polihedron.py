@@ -72,6 +72,7 @@ class Polihedron(object):
         self.isAnimated = False
         self.useTexture = False
         self.mapRotate  = matrix.identity()
+        self.skeleton = False
 
         # Contructing graph
 
@@ -134,12 +135,15 @@ class Polihedron(object):
 
         for i,face in enumerate(self.faces):
             # informando ao OpenGl o que vou desenhar
-            if ( len(face) % 3 == 0):
-                glBegin(GL_TRIANGLES)
-            elif ( len(face) % 4 == 0):
-                glBegin(GL_QUADS)
+            if not( self.skeleton):
+                if ( len(face) % 3 == 0):
+                    glBegin(GL_TRIANGLES)
+                elif ( len(face) % 4 == 0):
+                    glBegin(GL_QUADS)
+                else:
+                    glBegin(GL_POLYGON)
             else:
-                glBegin(GL_POLYGON)
+                glBegin(GL_LINES)
 
             # vendo se é escolhido
             if not self.useTexture:
@@ -247,10 +251,21 @@ class Polihedron(object):
         if self.useTexture:
             axis_z = Point(0.,0.,1.)
 
-            angle_z = axis_z.dotProd(self.polygons[q0].normal)
+            #angle_z = axis_z.dotProd(self.polygons[q0].normal)
+            angle_z = np.rad2deg(math.acos(axis_z.dotProd(self.polygons[q0].normal)))
+            #angle_z = 0.5
             axis_r = axis_z.crossProd(self.polygons[q0].normal)
+            #print angle_z
+            #print self.polygons[q0].normal
+            #axis_r = axis_r + Point(.1,.1,.1)
+            #print axis_r
 
-            self.mapRotate = matrix.translateAndRotate(angle_z,axis_r,self.points_per_face[q0][0])
+            #self.mapRotate = matrix.translateAndRotate(angle_z,axis_r,self.points_per_face[q0][0])
+            if( angle_z == .0):
+                self.mapRotate = matrix.identity()
+            else:
+                self.mapRotate = matrix.rotate(angle_z,axis_r.x,axis_r.y,axis_r.z)
+            #print self.mapRotate
 
             for points in self.points_per_face:
                 for point in points:
@@ -275,3 +290,9 @@ class Polihedron(object):
 
     def static(self):
         self.isAnimated = False
+
+    def skeletonOn(self):
+        self.skeleton = True
+
+    def skeletonOff(self):
+        self.skeleton = False

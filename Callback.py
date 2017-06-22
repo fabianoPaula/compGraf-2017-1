@@ -10,13 +10,13 @@ from ArcBall import * 		# ArcBallT and this tutorials set of points/vectors/matr
 
 from lib.geometry import Point,Line
 import lib.matrix as matrix
-
 import numpy as np
+from polihedron import *
+from ply import *
 
 from PIL.Image import open
 
-PI2 = 2.0*3.1415926535		# 2 * PI (not squared!) 		// PI Squared
-
+PI2 = 2.0*3.1415926535		# 2 * PI (not squared!)	// PI Squared
 
 #Definitions of the window
 winX = 640
@@ -36,6 +36,7 @@ g_quadratic = None
 
 g_isFaceSelected = False
 
+POLIHEDRON_SET = 1
 POLIEDRY = None
 RAY = Line(Point(0.0,0.0,0.0,),Point(1.0,1.0,1.0))
 
@@ -46,10 +47,27 @@ translating_rate = 1.0
 
 imageID = 0
 
-def set_poliedry(poliedry = None):
+
+def set_poliedry(poliedry_index):
     global POLIEDRY
-    POLIEDRY = poliedry
-    print "SAVED"
+    global g_isFaceSelected
+    filename = ""
+
+    if(poliedry_index == 1):
+        filename = "data_ply/tetrahedron.ply"
+    elif (poliedry_index == 2):
+        filename = "data_ply/cube.ply"
+    elif (poliedry_index == 3):
+        filename = "data_ply/octahedron.ply"
+    elif (poliedry_index == 4):
+        filename = "data_ply/dodecahedron.ply"
+    elif (poliedry_index == 5):
+        filename = "data_ply/icosahedron.ply"
+
+    POLIEDRY = Polihedron(PLY(filename))
+    g_isFaceSelected = False
+    print filename
+    print "POLIEDRY CHANGED!"
 
 # A general OpenGL initialization function.  Sets all of the initial parameters.
 def Initialize (Width, Height, imageName = "images/water.jpg"):				# We call this right after our OpenGL window is created.
@@ -70,7 +88,8 @@ def Initialize (Width, Height, imageName = "images/water.jpg"):				# We call thi
 
     glEnable (GL_COLOR_MATERIAL)
 
-    imageID = loadImage (imageName)
+    imageID = loadImage(1)
+    set_poliedry(1)
 
     return True
 
@@ -80,47 +99,64 @@ def keyPressed(*args):
     global profundidade
     global translating_rate
     global POLIEDRY,alpha
+    global imageID
     # If escape is pressed, kill everything.
     key = args [0]
     if key == ESCAPE:
         gluDeleteQuadric (g_quadratic)
         sys.exit ()
-    # key == 'u':
-    elif key == '\165':
+    elif key == 'i':
         profundidade += translating_rate
-    elif key == '\152':
-    # key == 'j':
+    elif key == 'k':
         profundidade -= translating_rate
     elif key == 'a':
-    # key == 'a':
         if POLIEDRY.face_selected == -1:
             print "Please, Select a face to open the poliedry"
             return
         alpha = 0.
         POLIEDRY.animate()
     elif key == 's':
-    # key == 's':
         POLIEDRY.static()
     elif key == 'o':
-    # key == 'o':
         if POLIEDRY.face_selected == -1:
             print "Please, Select a face to open the poliedry"
             return
         alpha = 0.
         POLIEDRY.open()
-    elif key == 'c':
-    # key == 'c':
+    elif key == 'l':
         POLIEDRY.close()
-    elif key == 't':
+    elif key == 'm':
         POLIEDRY.set_texture()
-    elif key == 'T':
+    elif key == 'M':
         POLIEDRY.unset_texture()
-    #elif key == 't':
-    # key == 't':
-    #    POLIEDRY.transform(matrix.translate(1.,1.,1.))
-    #elif key == 'r':
-    # key == 't':
-    #    POLIEDRY.transform(matrix.translate(-1.,-1.,-1.))
+
+    elif key == '1':
+        set_poliedry(1)
+    elif key == '2':
+        set_poliedry(2)
+    elif key == '3':
+        set_poliedry(3)
+    elif key == '4':
+        set_poliedry(4)
+    elif key == '5':
+        set_poliedry(5)
+
+
+    elif key == 'q':
+        imageID = loadImage(1)
+    elif key == 'w':
+        imageId = loadImage(2)
+    elif key == 'e':
+        imageID = loadImage(3)
+    elif key == 'r':
+        imageID = loadImage(4)
+    elif key == 't':
+        imageID = loadImage(5)
+
+    #elif key == 'u':
+    #    POLIEDRY.skeletonOn()
+    #elif key == 'j':
+    #    POLIEDRY.skeletonOff()
 
 
 def Upon_Drag (cursor_x, cursor_y):
@@ -175,13 +211,6 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
                 g_isFaceSelected = False
 
     g_isDragging = False
-    #if (button == GLUT_RIGHT_BUTTON and button_state == GLUT_UP):
-        # Right button click
-	#g_LastRot = Matrix3fSetIdentity ();					# Reset Rotation
-	#g_ThisRot = Matrix3fSetIdentity ();					# Reset Rotation
-	#g_Transform = Matrix4fSetRotationFromMatrix3f (g_Transform, g_ThisRot);	# Reset Rotation
-
-    #elif (button == GLUT_LEFT_BUTTON and button_state == GLUT_UP):
     if (button == GLUT_LEFT_BUTTON and button_state == GLUT_UP):
 	# Left button released
 	g_LastRot = copy.copy (g_ThisRot);					# Set Last Static Rotation To Last Dynamic One
@@ -193,8 +222,18 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
         g_ArcBall.click (mouse_pt)						# Update Start Vector And Prepare For Dragging
     return
 
-def loadImage(imageName ):
+def loadImage(image_index):
     """Load an image file as a 2D texture using PIL"""
+    if(image_index == 1):
+        imageName = "data_image/image1.jpg"
+    elif (image_index == 2):
+        imageName = "data_image/image2.jpg"
+    elif (image_index == 3):
+        imageName = "data_image/image3.jpg"
+    elif (image_index == 4):
+        imageName = "data_image/image4.jpg"
+    elif (image_index == 5):
+        imageName = "data_image/image5.jpg"
 
     # PIL defines an "open" method which is Image specific!
     im = open(imageName)
@@ -250,6 +289,8 @@ def Draw ():
         #print "Alpha: %f" % alpha
         if((alpha >= 1)or(alpha < 0.)):
             factor *= -1.
+    
+    RAY.draw()
 
     if POLIEDRY.isOpened:
         POLIEDRY.open_like_BFS(1.0)
