@@ -107,7 +107,7 @@ def keyPressed(*args):
         sys.exit ()
     elif key == 'i':
         profundidade += translating_rate
-    elif key == 'k':
+    elif key == 'I':
         profundidade -= translating_rate
     elif key == 'a':
         if POLIEDRY.face_selected == -1:
@@ -115,18 +115,22 @@ def keyPressed(*args):
             return
         alpha = 0.
         POLIEDRY.animate()
-    elif key == 's':
+    elif key == 'A':
         POLIEDRY.static()
     elif key == 'o':
         if POLIEDRY.face_selected == -1:
-            print "Please, Select a face to open the poliedry"
+            print "Please, Select a face to open the poliedry."
             return
         alpha = 0.
         POLIEDRY.open()
-    elif key == 'l':
+    elif key == 'O':
         POLIEDRY.close()
     elif key == 'm':
+        if POLIEDRY.face_selected == -1:
+            print "Please, Select a face to focus the texture."
+            return
         POLIEDRY.set_texture()
+        POLIEDRY.build_texture()
     elif key == 'M':
         POLIEDRY.unset_texture()
 
@@ -289,8 +293,8 @@ def Draw ():
         #print "Alpha: %f" % alpha
         if((alpha >= 1)or(alpha < 0.)):
             factor *= -1.
-    
-    RAY.draw()
+
+    #RAY.draw()
 
     if POLIEDRY.isOpened:
         POLIEDRY.open_like_BFS(1.0)

@@ -126,6 +126,8 @@ class Polihedron(object):
         self.selected = [0 for elem in edges_per_face]
         self.face_selected = -1
 
+        self.transf_vec_complete = [matrix.identity() for i in self.faces]
+
         return
 
 
@@ -158,15 +160,15 @@ class Polihedron(object):
             else:
                 points = self.points_per_face_orig[i]
 
-            for point in points:
+            for k,point in enumerate(points):
                 if self.useTexture:
-                    p = self.box.normalize(point.transform(self.mapRotate))
+                    tex_open = self.points_per_face_orig[i][k].transform(self.transf_vec[i])
+                    p = self.box.normalize(tex_open)
+
                     glTexCoord2f(p.x,p.y)
                     glVertex3f(point.x,point.y,point.z)
                 else:
                     glVertex3f(point.x,point.y,point.z)
-
-
             glEnd()
 
     def face_intersect(self,ray):
@@ -213,9 +215,6 @@ class Polihedron(object):
                     Q.append(v)
                     altura[v] = altura[q0] + 1
 
-                    #print "------------------------------------------------"
-                    #print (q1,v)
-
                     N1 = self.polygons[q1].normal
                     N2 = self.polygons[v].normal
 
@@ -239,39 +238,73 @@ class Polihedron(object):
                     ang = alpha*ang
 
                     R = matrix.translateAndRotate(ang,v1,edge.dir)
-                    #R = matrix.translateAndRotate(ang,v0,edge.dir)
-
                     transf_vec[v] = matrix.dot(transf_vec[q1],R)
-                    #transf_vec[v] = R
 
                     for i in xrange(len(self.points_per_face[v])):
                         self.points_per_face[v][i] =\
                         self.points_per_face_orig[v][i].transform(transf_vec[v])
 
-        if self.useTexture:
-            axis_z = Point(0.,0.,1.)
+    def build_texture(self):
+        alpha = 1.0
+        Q = []
+        visite1 = [False for i in self.faces]
+        self.transf_vec = [None for i in self.faces]
+        altura = [0 for i in self.faces]
 
-            #angle_z = axis_z.dotProd(self.polygons[q0].normal)
-            angle_z = np.rad2deg(math.acos(axis_z.dotProd(self.polygons[q0].normal)))
-            #angle_z = 0.5
-            axis_r = axis_z.crossProd(self.polygons[q0].normal)
-            #print angle_z
-            #print self.polygons[q0].normal
-            #axis_r = axis_r + Point(.1,.1,.1)
-            #print axis_r
+        q0 = self.face_selected
+        Q.append(q0)
+        visite1[q0] = True
+        altura[q0] = 1.
 
-            #self.mapRotate = matrix.translateAndRotate(angle_z,axis_r,self.points_per_face[q0][0])
-            if( angle_z == .0):
-                self.mapRotate = matrix.identity()
-            else:
-                self.mapRotate = matrix.rotate(angle_z,axis_r.x,axis_r.y,axis_r.z)
-            #print self.mapRotate
+        axis_z = Point(0.,0.,1.)
 
-            for points in self.points_per_face:
-                for point in points:
-                    self.box.add(point.transform(self.mapRotate))
+        angle_z = np.rad2deg(math.acos(axis_z.dotProd(self.polygons[q0].normal)))
+        axis_r = axis_z.crossProd(self.polygons[q0].normal)
 
-            self.box.setParameters()
+        mapRotate = matrix.identity() if( angle_z == .0) else \
+            matrix.rotate(angle_z,axis_r.x,axis_r.y,axis_r.z)
+
+        self.transf_vec[q0] = mapRotate
+
+        while len(Q) > 0:
+            q1 = Q.pop(0)
+            for v in self.adjacences_list[q1]:
+                if visite1[v] == False :
+                    visite1[v] = True
+                    Q.append(v)
+                    altura[v] = altura[q0] + 1
+
+                    N1 = self.polygons[q1].normal
+                    N2 = self.polygons[v].normal
+
+                    (np1,np2) = self.edge_between_faces[(q1,v)]
+
+                    v0 = self.vertex[np1]
+                    v1 = self.vertex[np2]
+
+                    edge = Line(v0,v1)
+                    # ângulo de rotação
+                    # para testar o ângulo é preciso fazer o produto interno
+                    ang = np.rad2deg(math.acos(N1.dotProd(N2)))
+                    # Eixo de rotação
+                    # edge.dir
+
+                    axis = edge.dir
+
+                    if axis.tripleProd(N1,N2) > 0:
+                        ang = -ang
+
+                    ang = alpha*ang
+                    R = matrix.translateAndRotate(ang,v1,edge.dir)
+
+                    self.transf_vec[v] = matrix.dot(self.transf_vec[q1],R)
+
+        for i,points in enumerate(self.points_per_face):
+            for k,point in enumerate(points):
+                p_open = self.points_per_face_orig[i][k].transform(self.transf_vec[i])
+                self.box.add(p_open)
+
+        self.box.setParameters()
 
     def open(self):
         self.isOpened = True
